@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GOFO 自营车辆运营报表</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#f0f4f8;--card:#fff;--navy:#1f3864;--blue:#2e75b6;--orange:#ed7d31;
   --green:#38a169;--red:#e53e3e;--yellow:#d69e2e;--purple:#805ad5;--teal:#0891b2;
   --grey:#718096;--border:#e2e8f0;
-  --c1:#4472c4;--c2:#ed7d31;--c3:#ffc000;--c4:#70ad47;--c5:#9b59b6;--c6:#0891b2;--c7:#a0aec0;
+  --c1:#4472c4;--c2:#ed7d31;--c3:#ffc000;--c4:#70ad47;--c5:#9b59b6;--c6:#0891b2;
   --r:10px;--g:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -24,63 +24,68 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .filters select{padding:5px 9px;border:1px solid rgba(255,255,255,.25);border-radius:5px;background:rgba(255,255,255,.12);color:#fff;font-size:12px;cursor:pointer}
 .filters select option{background:#1f3864}
-.fix-badge{background:#fbbf24;color:#1f3864;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:10px}
 
-/* KPI */
+/* Multi-select dropdown */
+.dd-wrap{position:relative}
+.dd-btn{padding:5px 10px;border:1px solid rgba(255,255,255,.25);border-radius:5px;background:rgba(255,255,255,.12);color:#fff;font-size:12px;cursor:pointer;white-space:nowrap}
+.dd-btn:hover{background:rgba(255,255,255,.22)}
+.dd-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:200;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px;min-width:240px;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.dd-panel.open{display:block}
+.dd-panel label{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:5px;cursor:pointer;font-size:12px;color:#2d3748}
+.dd-panel label:hover{background:#f0f4f8}
+.dd-panel label input{cursor:pointer}
+.dd-panel hr{border:none;border-top:1px solid var(--border);margin:4px 0}
+
+/* KPIs */
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--g);margin-bottom:var(--g)}
 .kpi{background:var(--card);border-radius:var(--r);padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-top:4px solid var(--blue);transition:transform .15s}
 .kpi:hover{transform:translateY(-2px)}
-.kpi.c1{border-top-color:var(--blue)}.kpi.c2{border-top-color:var(--orange)}.kpi.c3{border-top-color:var(--green)}
+.kpi.c1{border-top-color:var(--c1)}.kpi.c2{border-top-color:var(--orange)}.kpi.c3{border-top-color:var(--green)}
 .kpi.c4{border-top-color:var(--red)}.kpi.c5{border-top-color:var(--purple)}.kpi.c6{border-top-color:var(--teal)}
 .kpi-lbl{font-size:10px;color:var(--grey);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
-.kpi-val{font-size:24px;font-weight:800;line-height:1;margin-bottom:5px}
-.kpi-sub{font-size:11px;color:var(--grey)}
+.kpi-val{font-size:22px;font-weight:800;line-height:1;margin-bottom:5px}
+.kpi-sub{font-size:10px;color:var(--grey);line-height:1.5}
 
-/* Cards & Grids */
+/* Grids */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--g);margin-bottom:var(--g)}
-.grid3{display:grid;grid-template-columns:2fr 1fr;gap:var(--g);margin-bottom:var(--g)}
-.grid32{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--g);margin-bottom:var(--g)}
+.cost-layout{display:grid;grid-template-columns:2fr 1fr;gap:var(--g);margin-bottom:var(--g)}
+.cost-right{display:flex;flex-direction:column;gap:var(--g)}
 .grid-full{margin-bottom:var(--g)}
+
+/* Cards */
 .card{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.card h3{font-size:12px;font-weight:700;color:#1a202c;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card h3{font-size:12px;font-weight:700;color:#1a202c;margin-bottom:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .card h3 small{font-size:10px;color:var(--grey);font-weight:400}
 .card canvas{height:240px!important}
-.card.tall canvas{height:300px!important}
-.card.xl canvas{height:360px!important}
 
-/* Section title */
+/* Section titles */
 .sec-title{font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
-.section-wrap{margin-bottom:var(--g)}
 
-/* Pie cards */
-.pie-section{margin-bottom:var(--g)}
-.pie-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--g)}
+/* Pie section */
+.pie-cpm-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:var(--g);margin-bottom:var(--g)}
 .pie-card{background:var(--card);border-radius:var(--r);box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
-.pie-card-header{padding:14px 20px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
-.route-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:800}
-.route-badge.bhm{background:#dbeafe;color:#1e40af}
-.route-badge.mco{background:#fff7ed;color:#9a3412}
+.pie-card-header{padding:14px 20px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.pie-card-header select{padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;color:#1a202c;background:#f8fafc;cursor:pointer}
 .cpm-total{margin-left:auto;font-size:20px;font-weight:800;color:#1a202c}
 .cpm-label{font-size:10px;color:var(--grey);text-align:right}
 .pie-card-body{display:flex;gap:0;padding:16px 20px;align-items:center}
-.pie-chart-wrap{width:210px;flex-shrink:0;position:relative}
-.pie-chart-wrap canvas{height:200px!important;width:200px!important}
-.pie-legend{flex:1;padding-left:18px}
+.pie-chart-wrap{width:200px;flex-shrink:0}
+.pie-chart-wrap canvas{height:190px!important;width:190px!important}
+.pie-legend{flex:1;padding-left:16px}
 .legend-item{display:flex;align-items:center;padding:5px 0;border-bottom:1px solid #f7fafc;gap:8px}
 .legend-item:last-child{border-bottom:none}
-.legend-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .legend-name{flex:1;font-size:11px;color:#2d3748;font-weight:500}
-.legend-val{font-size:12px;font-weight:700;color:#1a202c;text-align:right;min-width:55px}
-.legend-pct{font-size:10px;color:var(--grey);width:36px;text-align:right}
-.legend-bar-wrap{width:60px;height:6px;background:#f0f4f8;border-radius:3px;overflow:hidden;margin-left:4px}
+.legend-val{font-size:12px;font-weight:700;color:#1a202c;text-align:right;min-width:52px}
+.legend-pct{font-size:10px;color:var(--grey);width:34px;text-align:right}
+.legend-bar-wrap{width:56px;height:5px;background:#f0f4f8;border-radius:3px;overflow:hidden;margin-left:4px}
 .legend-bar{height:100%;border-radius:3px}
 
-/* Optimization cards */
+/* Opt cards */
 .opt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--g);margin-bottom:var(--g)}
 .opt-card{background:var(--card);border-radius:var(--r);padding:14px 18px;border-left:4px solid var(--blue);box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.opt-card.red{border-left-color:var(--red)}.opt-card.orange{border-left-color:var(--orange)}
-.opt-card.green{border-left-color:var(--green)}.opt-card.blue{border-left-color:var(--blue)}
+.opt-card.orange{border-left-color:var(--orange)}.opt-card.green{border-left-color:var(--green)}
 .opt-card.purple{border-left-color:var(--purple)}.opt-card.teal{border-left-color:var(--teal)}
 .opt-icon{font-size:18px;margin-bottom:5px}
 .opt-title{font-size:10px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
@@ -88,406 +93,402 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .opt-body strong{font-weight:700;color:#1a202c}
 .opt-saving{font-size:13px;font-weight:800;color:var(--green);margin-top:6px;padding:4px 8px;background:#f0fdf4;border-radius:4px;display:inline-block}
 
-/* Fuel metric cards */
-.fuel-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.fuel-metric{background:#f8fafc;border-radius:6px;padding:10px 14px;text-align:center}
-.fuel-metric .fm-val{font-size:18px;font-weight:800;color:var(--navy)}
-.fuel-metric .fm-lbl{font-size:10px;color:var(--grey);margin-top:2px}
-
-/* Table */
+/* Table filter bar */
+.tbl-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.tbl-filter-bar select{padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;color:#2d3748;background:#f8fafc;cursor:pointer}
 .tbl-wrap{overflow-x:auto;max-height:420px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead th{position:sticky;top:0;z-index:1;padding:9px 11px;border-bottom:2px solid var(--border);color:var(--grey);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:right;background:#f8fafc;cursor:pointer;white-space:nowrap;user-select:none}
-thead th:first-child{text-align:left}
+thead th:first-child,thead th:nth-child(2),thead th:nth-child(3),thead th:nth-child(4){text-align:left}
 thead th:hover{background:#eff6ff;color:var(--blue)}
-tbody td{padding:9px 11px;border-bottom:1px solid #f0f4f8;text-align:right;vertical-align:middle}
-tbody td:first-child{text-align:left;font-weight:600}
+tbody td{padding:9px 11px;border-bottom:1px solid #f0f4f8;text-align:right;vertical-align:middle;white-space:nowrap}
+tbody td:first-child,tbody td:nth-child(2),tbody td:nth-child(3),tbody td:nth-child(4){text-align:left}
 tbody tr:hover{background:#f8fafc}
 tr.total-r{background:#fefce8!important;font-weight:700;border-top:2px solid #fbbf24}
 tr.total-r td{border-bottom:none}
-.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700}
-.pill.bhm{background:#dbeafe;color:#1e40af}.pill.mco{background:#fff7ed;color:#9a3412}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
 .chip-good{background:#dcfce7;color:#166534;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700}
 .chip-warn{background:#fef9c3;color:#854d0e;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700}
 .chip-bad{background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700}
 .cost-note{font-size:10px;color:var(--grey);font-style:italic;margin-top:6px}
-
-/* Calendar */
-.cal{display:grid;grid-template-columns:80px repeat(16,1fr);gap:2px;font-size:10px}
-.cal-hdr{text-align:center;padding:4px 2px;color:var(--grey);font-weight:700;border-bottom:1px solid var(--border)}
-.cal-lbl{display:flex;align-items:center;font-weight:700;color:var(--navy);padding:3px 4px;font-size:11px}
-.cal-cell{text-align:center;padding:4px 2px;border-radius:4px;min-height:32px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
-.cal-cell.mco{background:#fff7ed;color:#9a3412}.cal-cell.bhm{background:#dbeafe;color:#1e40af}
-.cal-cell.broken{background:#fee2e2;color:#991b1b}.cal-cell.rest{background:#f3f4f6;color:#6b7280}
-.cal-cell.empty{background:transparent}
-
-/* Tooltip fix badge */
-.data-note{background:#fffbeb;border:1px solid #fbbf24;border-radius:6px;padding:8px 14px;font-size:11px;color:#92400e;margin-bottom:var(--g);display:flex;align-items:center;gap:8px}
-
-@media(max-width:900px){.grid2,.grid3,.grid32,.pie-grid{grid-template-columns:1fr}.pie-card-body{flex-direction:column}.pie-chart-wrap{width:100%}.kpi-row{grid-template-columns:repeat(2,1fr)}}
-@media print{body{background:#fff}.filters{display:none}}
+.na{color:#cbd5e0}
+#stack-sizer{position:relative}
+#stack-sizer canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important}
+@media(max-width:900px){.grid2,.cost-layout,.pie-cpm-grid{grid-template-columns:1fr}.pie-card-body{flex-direction:column}.pie-chart-wrap{width:100%}.kpi-row{grid-template-columns:repeat(2,1fr)}}
+@media print{body{background:#fff}.filters,.dd-wrap,.tbl-filter-bar{display:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<!-- Header -->
+<!-- HEADER -->
 <header class="hdr">
   <div>
     <h1>🚛 GOFO 自营车辆运营报表</h1>
-    <p>覆盖：行程全量成本（含租赁+保险）· 单位成本 · 自营 vs 第三方 · 准点率 · 油耗效率 · 优化建议 &nbsp;|&nbsp; 2026-03-28 → 2026-04-12</p>
+    <p>覆盖：行程全量成本 · 路线趋势 · 里程核查 · 自营 vs 第三方 · 运营效率 &nbsp;|&nbsp; 2026-03-28 → 2026-05-08</p>
   </div>
   <div class="filters">
-    <select id="f-driver" onchange="applyFilters()">
-      <option value="all">全部司机</option>
-      <option value="Don Williams">Don Williams</option>
-      <option value="Troy Grandison">Troy Grandison</option>
-    </select>
-    <select id="f-route" onchange="applyFilters()">
-      <option value="all">全部线路</option>
-      <option value="ATL-BHM-ATL">ATL–BHM–ATL</option>
-      <option value="ATL-MCO-ATL">ATL–MCO–ATL</option>
+    <div class="dd-wrap" id="route-dd-wrap">
+      <button class="dd-btn" onclick="toggleDD(event)">路线：<span id="dd-display">全部路线</span> ▾</button>
+      <div class="dd-panel" id="dd-panel">
+        <label><input type="checkbox" id="ck-all" checked onchange="onCkAll(this)"> 🌐 全部路线</label>
+        <hr>
+        <label><input type="checkbox" class="ck-route" value="ATL-BHM-ATL"> GR000: ATL-BHM-ATL</label>
+        <label><input type="checkbox" class="ck-route" value="ATL-MCO-ATL"> GR001: ATL-MCO-ATL</label>
+        <label><input type="checkbox" class="ck-route" value="ATL-MCO-OCF-ATL"> GR002: ATL-MCO-OCF-ATL</label>
+        <label><input type="checkbox" class="ck-route" value="CNO-DFW-LAX-CNO"> GR003: CNO-DFW-LAX-CNO</label>
+        <label><input type="checkbox" class="ck-route" value="CNO-IAH-LAX-CNO"> GR004: CNO-IAH-LAX-CNO</label>
+        <label><input type="checkbox" class="ck-route" value="CNO-ATL-LAX-CNO"> GR005: CNO-ATL-LAX-CNO</label>
+        <label><input type="checkbox" class="ck-route" value="CNO-EWR-LAX-CNO"> GR006: CNO-EWR-LAX-CNO</label>
+        <label><input type="checkbox" class="ck-route" value="CNO-ORD-LAX-CNO"> GR007: CNO-ORD-LAX-CNO</label>
+      </div>
+    </div>
+    <select id="f-period" onchange="applyFilters()">
+      <option value="all">全部周期</option>
+      <option value="1">周期 1</option><option value="2">周期 2</option>
+      <option value="3">周期 3</option><option value="4">周期 4</option><option value="5">周期 5</option>
     </select>
   </div>
 </header>
 
-
 <!-- KPI -->
 <section class="kpi-row" id="kpi-section"></section>
 
-<!-- ══ PIE CHARTS ══ -->
-<div class="sec-title">🥧 各线路单位成本构成（$/英里）— 含全量成本</div>
-<div class="pie-grid" style="margin-bottom:var(--g)">
+<!-- PIE + CPM SIDE BY SIDE -->
+<div class="sec-title">🥧 各路线成本构成 &amp; 趟次成本/英里</div>
+<div class="pie-cpm-grid">
   <div class="pie-card">
     <div class="pie-card-header">
-      <span class="route-badge bhm">ATL – BHM – ATL</span>
-      <span style="font-size:11px;color:var(--grey);margin-left:6px">326 英里 往返</span>
+      <span style="font-weight:700;font-size:13px">路线：</span>
+      <select id="pie-route-sel" onchange="buildPieSection()">
+        <option value="ATL-BHM-ATL">GR000: ATL-BHM-ATL</option>
+        <option value="ATL-MCO-ATL">GR001: ATL-MCO-ATL</option>
+        <option value="ATL-MCO-OCF-ATL">GR002: ATL-MCO-OCF-ATL</option>
+        <option value="CNO-DFW-LAX-CNO">GR003: CNO-DFW-LAX-CNO</option>
+        <option value="CNO-IAH-LAX-CNO">GR004: CNO-IAH-LAX-CNO</option>
+      </select>
       <div style="margin-left:auto;text-align:right">
-        <div class="cpm-total" id="bhm-cpm-total">$2.685 <span style="font-size:12px;font-weight:400;color:var(--grey)">/mi</span></div>
+        <div class="cpm-total" id="pie-cpm-total">—</div>
         <div class="cpm-label">综合成本/英里</div>
       </div>
     </div>
     <div class="pie-card-body">
-      <div class="pie-chart-wrap"><canvas id="pie-bhm"></canvas></div>
-      <div class="pie-legend" id="legend-bhm"></div>
+      <div class="pie-chart-wrap"><canvas id="pie-main"></canvas></div>
+      <div class="pie-legend" id="legend-main"></div>
     </div>
   </div>
-  <div class="pie-card">
-    <div class="pie-card-header">
-      <span class="route-badge mco">ATL – MCO – ATL</span>
-      <span style="font-size:11px;color:var(--grey);margin-left:6px">876 英里 往返</span>
-      <div style="margin-left:auto;text-align:right">
-        <div class="cpm-total" id="mco-cpm-total">$2.011 <span style="font-size:12px;font-weight:400;color:var(--grey)">/mi</span></div>
-        <div class="cpm-label">综合成本/英里</div>
-      </div>
-    </div>
-    <div class="pie-card-body">
-      <div class="pie-chart-wrap"><canvas id="pie-mco"></canvas></div>
-      <div class="pie-legend" id="legend-mco"></div>
-    </div>
+  <div class="card">
+    <h3>📐 每英里综合成本（各趟次）<small>与左侧路线联动</small></h3>
+    <canvas id="c-cpm-side" style="height:230px!important"></canvas>
   </div>
 </div>
 
-<!-- ══ ROW 1: STACKED COST + VS 3rd PARTY ══ -->
+<!-- COST STRUCTURE -->
 <div class="sec-title">💰 成本结构与路线对比</div>
-<div class="grid3">
-  <div class="card tall xl">
-    <h3>逐单完整成本结构 <small>（7项成本全部纳入，可按司机/线路筛选）</small></h3>
-    <canvas id="c-stack"></canvas>
+<div class="cost-layout">
+  <div class="card" style="min-width:0;overflow:hidden">
+    <h3>逐单完整成本结构 <small>（全局筛选 · 左右滑动）</small></h3>
+    <div style="overflow-x:auto;overflow-y:hidden">
+      <div id="stack-sizer" style="height:340px;min-width:900px">
+        <canvas id="c-stack"></canvas>
+      </div>
+    </div>
   </div>
-  <div class="card tall">
-    <h3>⚖️ 自营 vs 第三方（单次往返）</h3>
-    <canvas id="c-vs3p"></canvas>
-    <p class="cost-note">* 第三方：BHM $1,100 / MCO $2,000（往返报价）</p>
+  <div class="cost-right">
+    <div class="card" style="flex:1">
+      <h3>⚖️ 自营 vs 第三方 · 各路线节省明细</h3>
+      <canvas id="c-vs3p-combined" style="height:310px!important"></canvas>
+      <p class="cost-note" id="vs3p-note" style="margin-top:6px"></p>
+    </div>
   </div>
 </div>
 
-<!-- ══ ROW 2: CPM + SAVINGS ══ -->
+<!-- TREND CHARTS -->
+<div class="sec-title">📈 各路线成本变化趋势</div>
 <div class="grid2">
   <div class="card">
-    <h3>📐 每英里综合成本（各趟次）</h3>
-    <canvas id="c-cpm"></canvas>
+    <h3>各路线每趟总成本趋势（$）</h3>
+    <canvas id="c-trend" style="height:280px!important"></canvas>
   </div>
   <div class="card">
-    <h3>💵 每趟节省金额 vs 第三方</h3>
-    <canvas id="c-saving"></canvas>
+    <h3>各路线单位成本趋势（$/英里）</h3>
+    <canvas id="c-cpm-trend" style="height:280px!important"></canvas>
   </div>
 </div>
 
-<!-- ══ ROW 3: ONTIME + WAIT ══ -->
-<div class="sec-title">⏱️ 运营效率分析</div>
-<div class="grid2">
-  <div class="card">
-    <h3>计划 vs 实际行驶时长（小时）<small> 🔴超时 🟢提前</small></h3>
-    <canvas id="c-ontime"></canvas>
-  </div>
-  <div class="card">
-    <h3>🕐 出发等待时长（分钟）<small>🔴>3h 🟡1–3h 🔵&lt;1h</small></h3>
-    <canvas id="c-wait"></canvas>
-  </div>
+<!-- MILEAGE -->
+<div class="sec-title">📍 里程核查（实际 vs 系统预计）</div>
+<div class="card grid-full">
+  <canvas id="c-mileage" style="height:220px!important"></canvas>
+  <p class="cost-note">数据来源：里程对比表（Check-in / Check-out 里程计算）</p>
 </div>
 
-<!-- ══ ROW 4: FUEL ══ -->
-<div class="sec-title">⛽ 油耗分析</div>
-<div class="grid3">
-  <div class="card">
-    <h3>加油量（加仑）& 金额 by 加油记录</h3>
-    <div class="fuel-row" id="fuel-metrics"></div>
-    <canvas id="c-fuel"></canvas>
-  </div>
-  <div class="card">
-    <h3>🚗 油耗效率（英里/加仑）by 趟次</h3>
-    <canvas id="c-mpg"></canvas>
-    <p class="cost-note">* 实际MPG = 实际里程 ÷ 加油量；部分趟次跨越补油区间，仅供参考</p>
-  </div>
-</div>
-
-<!-- ══ OPTIMIZATION INSIGHTS ══ -->
+<!-- OPTIMIZATION -->
 <div class="sec-title">🔧 优化建议</div>
 <div class="opt-grid">
   <div class="opt-card orange">
     <div class="opt-icon">🕐</div>
-    <div class="opt-title">出发等待时长管控空间大</div>
-    <div class="opt-body">Troy 4/4 MCO 任务等待<strong>7h 29m</strong>，共4趟超过2h等待。等待期间仍产生人员成本$100。建议制定<strong>最大等待时长上限（如2h）</strong>，超时启动备选调度，减少无效人工成本。</div>
-    <div class="opt-saving">潜在节省：$100–$200/趟（等候期人员费）</div>
+    <div class="opt-title">出发等待时长管控</div>
+    <div class="opt-body">部分趟次等待超过 <strong>7h</strong>，建议制定<strong>最大等待上限（如 2h）</strong>，超时启动备选调度，减少无效人工成本。</div>
   </div>
   <div class="opt-card green">
     <div class="opt-icon">💰</div>
-    <div class="opt-title">MCO 线路自营价值远高于 BHM</div>
-    <div class="opt-body">MCO 每趟自营节省<strong>$237.59（11.9%）</strong>，BHM 仅节省<strong>$224.77（20.4%）</strong>（对比往返报价$1,100）。在车辆运力有限时，优先保障<strong>MCO排班</strong>，BHM可评估是否转为第三方外包。</div>
-    <div class="opt-saving">MCO 年化节省（每月8趟）≈ $22,794</div>
+    <div class="opt-title">长途路线自营价值显著</div>
+    <div class="opt-body">GR001/GR002 每趟自营节省约 <strong>$238（11.9%）</strong>，GR003 路线节省约 <strong>$1,334（20.8%）</strong>。随路线扩展，规模效益递增，优先保障长途排班。</div>
+    <div class="opt-saving">GR003 年化节省（月4趟）≈ $64,032</div>
   </div>
   <div class="opt-card purple">
     <div class="opt-icon">⛽</div>
-    <div class="opt-title">油耗效率差异显著，建议统一加油策略</div>
-    <div class="opt-body">3/31 Troy MCO 行程实际MPG约<strong>5.26 mi/gal</strong>，而4/2 MCO趟次达<strong>8.36 mi/gal</strong>，差距近60%。建议统一使用<strong>里程计加油记录</strong>，识别异常油耗（可能含空载、绕路、怠速）。同时考虑按月与固定加油站签订<strong>批量采购协议</strong>压低单价。</div>
-    <div class="opt-saving">油价每加仑省$0.3 → MCO每趟省约$50</div>
+    <div class="opt-title">统一油费及成本计算口径</div>
+    <div class="opt-body">建议<strong>全线路统一里程油费公式</strong>（$0.582/mi 或 $4.82/7.2mi），持续记录里程确保数据可比。<strong>车辆租赁和保险费用应按每期实际账单价格录入</strong>，不做固定分摊估算，保证成本核算准确性。</div>
   </div>
   <div class="opt-card teal">
     <div class="opt-icon">🚗</div>
-    <div class="opt-title">车辆维保计划应提前介入</div>
-    <div class="opt-body">车1于4/3首次故障，4/6–4/9再次停运，<strong>累计停运6天</strong>，MCO运力缺口转为第三方。每次第三方替代成本为$2,000/趟。建议建立<strong>预防性维保日历</strong>（每N趟或N公里强制检查），并保持第三方备用联系渠道。</div>
-    <div class="opt-saving">单次坏车损失：≥$2,000（第三方补单）</div>
-  </div>
-  <div class="opt-card blue">
-    <div class="opt-icon">📦</div>
-    <div class="opt-title">装卸费结构不对称，应纳入报价谈判</div>
-    <div class="opt-body">BHM 4趟中有装卸费$100，MCO全程<strong>无装卸费</strong>。若BHM装卸费来自客户侧货站等候，可考虑<strong>在合同中增加超时装卸罚款条款</strong>，或协商含装卸的<strong>固定价格包干</strong>，将成本转移至发货方。</div>
-    <div class="opt-saving">消除BHM装卸费 → 每趟省$100（约11%）</div>
+    <div class="opt-title">里程差异持续监控</div>
+    <div class="opt-body">GR001 实际里程较系统预计多 <strong>2–13mi</strong>，整体偏差在合理范围内，持续积累里程数据有助于精确核算燃油成本与司机工资。</div>
   </div>
 </div>
 
-<!-- ══ CALENDAR ══ -->
-<div class="sec-title">📅 排班日历 2026-03-28 → 2026-04-12</div>
-<div class="card grid-full">
-  <div class="cal" id="cal-grid"></div>
-  <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-    <span class="pill mco" style="border-radius:4px">MCO 线路</span>
-    <span class="pill bhm" style="border-radius:4px">BHM 线路</span>
-    <span style="display:inline-block;padding:2px 9px;border-radius:4px;font-size:10px;background:#fee2e2;color:#991b1b;font-weight:700">坏车停运</span>
-    <span style="display:inline-block;padding:2px 9px;border-radius:4px;font-size:10px;background:#f3f4f6;color:#6b7280;font-weight:700">司机休息</span>
+<!-- OPS EFFICIENCY -->
+<div class="sec-title">⏱️ 运营效率分析</div>
+<div class="grid2">
+  <div class="card">
+    <h3>实际行驶时长（小时）vs 第三方时长 <small>🔴超时 🟢提前</small></h3>
+    <canvas id="c-ontime"></canvas>
+  </div>
+  <div class="card">
+    <h3>🕐 出发等待时长（分钟）<small>🔴&gt;3h 🟡1–3h 🔵&lt;1h</small></h3>
+    <canvas id="c-wait"></canvas>
   </div>
 </div>
 
-<!-- ══ COST TABLE ══ -->
-<div class="sec-title">📋 行程成本明细（含全量成本）</div>
+<!-- COST TABLE -->
+<div class="sec-title">📋 行程成本明细（出行记录 &gt; 0）</div>
 <div class="card grid-full">
+  <div class="tbl-filter-bar">
+    <select id="tc-route" onchange="renderCostTable()">
+      <option value="all">全部路线</option>
+      <option value="ATL-BHM-ATL">GR000: ATL-BHM-ATL</option>
+      <option value="ATL-MCO-ATL">GR001: ATL-MCO-ATL</option>
+      <option value="ATL-MCO-OCF-ATL">GR002: ATL-MCO-OCF-ATL</option>
+      <option value="CNO-DFW-LAX-CNO">GR003: CNO-DFW-LAX-CNO</option>
+      <option value="CNO-IAH-LAX-CNO">GR004: CNO-IAH-LAX-CNO</option>
+    </select>
+    <select id="tc-period" onchange="renderCostTable()">
+      <option value="all">全部周期</option>
+      <option value="1">周期 1</option><option value="2">周期 2</option>
+      <option value="3">周期 3</option><option value="4">周期 4</option><option value="5">周期 5</option>
+    </select>
+    <select id="tc-driver" onchange="renderCostTable()">
+      <option value="all">全部司机</option>
+      <option value="Don Williams">Don Williams</option>
+      <option value="MSD001">MSD001</option>
+      <option value="WED004/WED005">WED004/WED005</option>
+      <option value="WED006/WED007">WED006/WED007</option>
+    </select>
+  </div>
   <div class="tbl-wrap" id="tbl-cost"></div>
 </div>
 
-<!-- ══ OPS TABLE ══ -->
+<!-- OPS TABLE -->
 <div class="sec-title" style="margin-top:var(--g)">🏁 运营效率明细</div>
 <div class="card grid-full">
+  <div class="tbl-filter-bar">
+    <select id="to-route" onchange="renderOpsTable()">
+      <option value="all">全部路线</option>
+      <option value="ATL-BHM-ATL">GR000: ATL-BHM-ATL</option>
+      <option value="ATL-MCO-ATL">GR001: ATL-MCO-ATL</option>
+      <option value="ATL-MCO-OCF-ATL">GR002: ATL-MCO-OCF-ATL</option>
+      <option value="CNO-DFW-LAX-CNO">GR003: CNO-DFW-LAX-CNO</option>
+      <option value="CNO-IAH-LAX-CNO">GR004: CNO-IAH-LAX-CNO</option>
+    </select>
+    <select id="to-period" onchange="renderOpsTable()">
+      <option value="all">全部周期</option>
+      <option value="1">周期 1</option><option value="2">周期 2</option>
+      <option value="3">周期 3</option><option value="4">周期 4</option>
+    </select>
+  </div>
   <div class="tbl-wrap" id="tbl-ops"></div>
 </div>
 
 <div style="text-align:center;padding:16px 0;color:var(--grey);font-size:11px">
-  GOFO 运营分析 &nbsp;|&nbsp; 数据来源：自营成本表 · 油耗 · 运营效率 · 第三方成本 &nbsp;|&nbsp; 2026-04-14
+  GOFO 运营分析 &nbsp;|&nbsp; 数据来源：自营成本表 · 里程对比 · 第三方成本 · 运营效率 &nbsp;|&nbsp; 2026-05-09
+</div>
 </div>
 
-</div><!-- /wrap -->
-
 <script>
-// ═══════════════════════════════════════════════════════════════════════════════
-// DATA — 完整7项成本（增加 lease + insurance）
-// ═══════════════════════════════════════════════════════════════════════════════
-// 公摊方式：月租$994.75 按里程比例分摊（BHM 326mi → /7, MCO 876mi → /3.5）
-// 保险$378/月 同比例（BHM /7, MCO /3.5）
-const LEASE_M = 994.75, INS_M = 378;
-const BHM_LEASE = LEASE_M / 7, BHM_INS = INS_M / 7;   // $142.11, $54
-const MCO_LEASE = LEASE_M / 3.5, MCO_INS = INS_M / 3.5; // $284.21, $108
+// ══════════════════════════════════════════════════════════
+// ROUTE CODE SYSTEM  GR000–GR007
+// ══════════════════════════════════════════════════════════
+const ROUTE_CODES = {
+  'ATL-BHM-ATL':    'GR000','ATL-MCO-ATL':    'GR001',
+  'ATL-MCO-OCF-ATL':'GR002','CNO-DFW-LAX-CNO':'GR003',
+  'CNO-IAH-LAX-CNO':'GR004','CNO-ATL-LAX-CNO':'GR005',
+  'CNO-EWR-LAX-CNO':'GR006','CNO-ORD-LAX-CNO':'GR007',
+};
+const ROUTE_STYLE = {
+  'ATL-BHM-ATL':    {bg:'#dbeafe',txt:'#1e40af',ch:'#4472c4'},
+  'ATL-MCO-ATL':    {bg:'#fff7ed',txt:'#9a3412',ch:'#ed7d31'},
+  'ATL-MCO-OCF-ATL':{bg:'#e0f2fe',txt:'#075985',ch:'#0891b2'},
+  'CNO-DFW-LAX-CNO':{bg:'#ede9fe',txt:'#5b21b6',ch:'#805ad5'},
+  'CNO-IAH-LAX-CNO':{bg:'#fee2e2',txt:'#991b1b',ch:'#e53e3e'},
+  'CNO-ATL-LAX-CNO':{bg:'#dcfce7',txt:'#166534',ch:'#38a169'},
+  'CNO-EWR-LAX-CNO':{bg:'#fef9c3',txt:'#854d0e',ch:'#d69e2e'},
+  'CNO-ORD-LAX-CNO':{bg:'#fce7f3',txt:'#9d174d',ch:'#d53f8c'},
+};
+const routeCode  = r => ROUTE_CODES[r] || r;
+const routeColor = r => (ROUTE_STYLE[r]||{ch:'#718096'}).ch;
 
+// ══════════════════════════════════════════════════════════
+// DATA — MOC全部改为MCO，GD001改为MSD001
+// ══════════════════════════════════════════════════════════
 const TRIPS = [
-  {id:1,mt:'MT2026032800309',date:'2026-03-28',driver:'Don Williams',  route:'ATL-MCO-ATL',miles:876, wages:744.60, loading:0,   fuel:525.60, staff:100, lease:MCO_LEASE, ins:MCO_INS, other:0,    other_type:''},
-  {id:2,mt:'MT2026033000472',date:'2026-03-30',driver:'Don Williams',  route:'ATL-BHM-ATL',miles:326, wages:277.10, loading:0,   fuel:220.00, staff:100, lease:BHM_LEASE, ins:BHM_INS, other:0,    other_type:''},
-  {id:3,mt:'MT2026033100487',date:'2026-03-31',driver:'Don Williams',  route:'ATL-BHM-ATL',miles:326, wages:277.10, loading:100, fuel:220.00, staff:100, lease:BHM_LEASE, ins:BHM_INS, other:10.12,other_type:'DEF费用'},
-  {id:4,mt:'MT2026033100295',date:'2026-03-31',driver:'Troy Grandison',route:'ATL-MCO-ATL',miles:876, wages:744.60, loading:0,   fuel:525.60, staff:100, lease:MCO_LEASE, ins:MCO_INS, other:0,    other_type:''},
-  {id:5,mt:'MT2026040100497',date:'2026-04-01',driver:'Don Williams',  route:'ATL-BHM-ATL',miles:326, wages:277.10, loading:100, fuel:220.00, staff:100, lease:BHM_LEASE, ins:BHM_INS, other:0,    other_type:''},
-  {id:6,mt:'MT2026040200576',date:'2026-04-02',driver:'Don Williams',  route:'ATL-BHM-ATL',miles:326, wages:277.10, loading:100, fuel:220.00, staff:100, lease:BHM_LEASE, ins:BHM_INS, other:0,    other_type:''},
-  {id:7,mt:'MT2026040200293',date:'2026-04-02',driver:'Troy Grandison',route:'ATL-MCO-ATL',miles:876, wages:744.60, loading:0,   fuel:525.60, staff:100, lease:MCO_LEASE, ins:MCO_INS, other:0,    other_type:''},
-  {id:8,mt:'MT2026040400291',date:'2026-04-04',driver:'Troy Grandison',route:'ATL-MCO-ATL',miles:876, wages:744.60, loading:0,   fuel:525.60, staff:100, lease:MCO_LEASE, ins:MCO_INS, other:0,    other_type:''},
-  {id:9,mt:'MT2026040600420',date:'2026-04-06',driver:'Don Williams',  route:'ATL-BHM-ATL',miles:326, wages:277.10, loading:100, fuel:220.00, staff:100, lease:BHM_LEASE, ins:BHM_INS, other:0,    other_type:''},
+  {no:1, mt:'MT2026032800309',                date:'2026-03-28',period:1,driver:'Don Williams',  route:'ATL-MCO-ATL',     miles:876, wages:744.60,loading:0,  fuel:525.60,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:2, mt:'MT2026033000472',                date:'2026-03-30',period:1,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:0,  fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:3, mt:'MT2026033100487',                date:'2026-03-31',period:1,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:10.12,other_type:'DEF费用'},
+  {no:4, mt:'MT2026033100295',                date:'2026-03-31',period:1,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:876, wages:744.60,loading:0,  fuel:525.60,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:5, mt:'MT2026040100497',                date:'2026-04-01',period:1,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:6, mt:'MT2026040200576',                date:'2026-04-02',period:1,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:7, mt:'MT2026040200293',                date:'2026-04-02',period:1,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:876, wages:744.60,loading:0,  fuel:525.60,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:8, mt:'MT2026040400291',                date:'2026-04-04',period:1,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:876, wages:744.60,loading:0,  fuel:525.60,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:9, mt:'MT2026040600420',                date:'2026-04-06',period:1,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:10,mt:'MT2026040700456',                date:'2026-04-07',period:2,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:12,mt:'MT2026040800480',                date:'2026-04-08',period:2,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:13,mt:'MT2026040900542',                date:'2026-04-09',period:2,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:14,mt:'MT2026041000476',                date:'2026-04-10',period:2,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:15,mt:'MT2026041100496',                date:'2026-04-11',period:2,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:16,mt:'MT2026041300421',                date:'2026-04-13',period:2,driver:'Don Williams',  route:'ATL-BHM-ATL',     miles:326, wages:277.10,loading:100,fuel:220.00,staff:100,lease_ins:196.11,other:0,   other_type:''},
+  {no:17,mt:'MT2026042400277',                date:'2026-04-24',period:3,driver:'MSD001',        route:'ATL-MCO-OCF-ATL', miles:876, wages:744.60,loading:0,  fuel:509.83,staff:100,lease_ins:392.21,other:50,  other_type:'Stop Fee'},
+  {no:18,mt:'MT2026042800271',                date:'2026-04-28',period:3,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:876, wages:744.60,loading:0,  fuel:509.83,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:19,mt:'MT2026043000286',                date:'2026-04-29',period:3,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:876, wages:744.60,loading:0,  fuel:509.83,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:20,mt:'MT2026050100185',                date:'2026-04-30',period:3,driver:'MSD001',        route:'ATL-MCO-OCF-ATL', miles:876, wages:744.60,loading:0,  fuel:509.83,staff:100,lease_ins:392.21,other:50,  other_type:'Stop Fee'},
+  {no:21,mt:'MT2026050200285',                date:'2026-05-02',period:4,driver:'MSD001',        route:'ATL-MCO-OCF-ATL', miles:881, wages:748.85,loading:0,  fuel:589.78,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:22,mt:'MT2026050500431',                date:'2026-05-05',period:4,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:875, wages:743.75,loading:0,  fuel:585.76,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:23,mt:'MT2026050700264',                date:'2026-05-07',period:4,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:874, wages:742.90,loading:0,  fuel:585.09,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:24,mt:'MT2026050500121/MT2026050600045',date:'2026-05-05',period:4,driver:'WED004/WED005', route:'CNO-DFW-LAX-CNO', miles:2881,wages:2448.85,loading:0,fuel:1928.67,staff:100,lease_ins:588.32,other:0,other_type:''},
+  {no:25,mt:'MT2026050800311',                date:'2026-05-07',period:5,driver:'WED006/WED007', route:'CNO-IAH-LAX-CNO', miles:null,wages:null,  loading:0,  fuel:null,  staff:100,lease_ins:588.32,other:0,   other_type:''},
+  {no:26,mt:'MT2026050700307',                date:'2026-05-07',period:5,driver:'WED004/WED005', route:'CNO-DFW-LAX-CNO', miles:null,wages:null,  loading:0,  fuel:null,  staff:100,lease_ins:588.32,other:0,   other_type:''},
 ];
-TRIPS.forEach(t => {
-  t.total = t.wages + t.loading + t.fuel + t.staff + t.lease + t.ins + t.other;
-  t.cpm   = t.total / t.miles;
+TRIPS.forEach(t=>{
+  if(t.wages!=null&&t.fuel!=null){
+    t.total=+(t.wages+t.loading+t.fuel+t.staff+t.lease_ins+t.other).toFixed(2);
+    t.cpm=+(t.total/t.miles).toFixed(6);
+  } else { t.total=null; t.cpm=null; }
 });
 
-// Third-party往返报价
-const THIRD_PARTY = { 'ATL-BHM-ATL': 1100, 'ATL-MCO-ATL': 2000 };
-
-const OPS = [
-  {mt:'MT2026032800309',  label:'MCO 3/28',driver:'Don Williams',  route:'ATL-MCO-ATL',planned:10,actual:7,  wait_min:90, drive:'6h 36m',miles:438},
-  {mt:'MT2026033000472',  label:'BHM 3/30',driver:'Don Williams',  route:'ATL-BHM-ATL',planned:4, actual:3.5,wait_min:95, drive:'7h 0m', miles:163},
-  {mt:'MT2026033100295',  label:'MCO 3/31',driver:'Troy Grandison',route:'ATL-MCO-ATL',planned:10,actual:7,  wait_min:166,drive:'7h 3m', miles:438},
-  {mt:'MT2026033100487',  label:'BHM 3/31',driver:'Don Williams',  route:'ATL-BHM-ATL',planned:4, actual:3.5,wait_min:52, drive:'8h 6m', miles:163},
-  {mt:'MT2026040100497',  label:'BHM 4/01',driver:'Don Williams',  route:'ATL-BHM-ATL',planned:4, actual:3.5,wait_min:166,drive:'6h 0m', miles:163},
-  {mt:'MT2026040200293',  label:'MCO 4/02',driver:'Troy Grandison',route:'ATL-MCO-ATL',planned:10,actual:8,  wait_min:230,drive:'8h 3m', miles:438},
-  {mt:'MT2026040200576-1',label:'BHM 4/02①',driver:'Don Williams',route:'ATL-BHM-ATL',planned:4, actual:3.5,wait_min:140,drive:'6h 52m',miles:159},
-  {mt:'MT2026040200576-2',label:'BHM 4/02②',driver:'Don Williams',route:'ATL-BHM-ATL',planned:4, actual:3.5,wait_min:10, drive:'5h 53m',miles:159},
-  {mt:'MT2026040400291',  label:'MCO 4/04',driver:'Troy Grandison',route:'ATL-MCO-ATL',planned:10,actual:8,  wait_min:449,drive:'7h 41m',miles:438},
-  {mt:'MT2026040600420',  label:'BHM 4/06',driver:'Don Williams',  route:'ATL-BHM-ATL',planned:4, actual:3.5,wait_min:212,drive:'4h 36m',miles:163},
-];
-
-// 油耗数据（含实际里程、加油量）
-const FUEL = [
-  {date:'2026-03-31',driver:'Troy Grandison',gal:166.48,cost:853,   actual_mi:876, planned_mi:876, note:'MCO往返'},
-  {date:'2026-03-31',driver:'Don Williams',  gal:97.92, cost:528.66,actual_mi:326, planned_mi:326, note:'BHM往返'},
-  {date:'2026-04-01',driver:'Don Williams',  gal:68.213,cost:375.11,actual_mi:667, planned_mi:652, note:'BHM×2趟（实际多15mi）'},
-  {date:'2026-04-02',driver:'Troy Grandison',gal:110.4, cost:600,   actual_mi:922, planned_mi:876, note:'MCO往返（实多46mi）'},
-  {date:'2026-04-04',driver:'Troy Grandison',gal:80,    cost:400,   actual_mi:890, planned_mi:876, note:'MCO往返（实多14mi）'},
-];
-FUEL.forEach(f => { f.mpg = f.gal > 0 ? (f.actual_mi / f.gal).toFixed(2) : '—'; f.cpg = f.gal > 0 ? (f.cost / f.gal).toFixed(2) : '—'; });
-
-// Unit cost data (完整成本)
-// BHM avg: trip costs = [793.21, 903.33, 893.21, 893.21, 893.21] → avg = 875.23
-// MCO avg: all 4 trips = 1762.41
-const BHM_AVG = TRIPS.filter(t=>t.route==='ATL-BHM-ATL').reduce((s,t)=>s+t.total,0)/TRIPS.filter(t=>t.route==='ATL-BHM-ATL').length;
-const MCO_AVG = TRIPS.filter(t=>t.route==='ATL-MCO-ATL').reduce((s,t)=>s+t.total,0)/TRIPS.filter(t=>t.route==='ATL-MCO-ATL').length;
-
-const UNIT_COST = {
-  BHM: {
-    miles:326,
-    total: BHM_AVG,
-    items:[
-      {name:'司机工资', val: 277.10/326,   color:'#4472c4'},
-      {name:'油费',     val: 220.00/326,   color:'#ed7d31'},
-      {name:'装卸费',   val: 80.00/326,    color:'#ffc000'},   // avg (4×$100 / 5 trips)
-      {name:'人员成本', val: 100.00/326,   color:'#70ad47'},
-      {name:'车辆租赁', val: BHM_LEASE/326,color:'#9b59b6'},
-      {name:'保险费',   val: BHM_INS/326,  color:'#0891b2'},
-      {name:'其他',     val: (10.12/5)/326,color:'#a0aec0'},
-    ]
-  },
-  MCO: {
-    miles:876,
-    total: MCO_AVG,
-    items:[
-      {name:'司机工资', val: 744.60/876,   color:'#4472c4'},
-      {name:'油费',     val: 525.60/876,   color:'#ed7d31'},
-      {name:'装卸费',   val: 0,            color:'#ffc000'},
-      {name:'人员成本', val: 100.00/876,   color:'#70ad47'},
-      {name:'车辆租赁', val: MCO_LEASE/876,color:'#9b59b6'},
-      {name:'保险费',   val: MCO_INS/876,  color:'#0891b2'},
-      {name:'其他',     val: 0,            color:'#a0aec0'},
-    ]
-  }
+const THIRD_PARTY={
+  'ATL-BHM-ATL':1100,'ATL-MCO-ATL':2000,
+  'ATL-MCO-OCF-ATL':2400,'CNO-DFW-LAX-CNO':6400,'CNO-IAH-LAX-CNO':6600,
 };
 
-const CAL_DATA = [
-  {date:'03-28',a1:'MCO',a2:'MCO'}, {date:'03-29',a1:'MCO',a2:'MCO'},
-  {date:'03-30',a1:'MCO',a2:'休息'},{date:'03-31',a1:'MCO',a2:'BHM'},
-  {date:'04-01',a1:'MCO',a2:'BHM'},{date:'04-02',a1:'MCO',a2:'BHM'},
-  {date:'04-03',a1:'坏车',a2:'休息'},{date:'04-04',a1:'MCO',a2:'休息'},
-  {date:'04-05',a1:'MCO',a2:'休息'},{date:'04-06',a1:'坏车',a2:'BHM'},
-  {date:'04-07',a1:'坏车',a2:'BHM'},{date:'04-08',a1:'坏车',a2:'BHM'},
-  {date:'04-09',a1:'坏车',a2:'BHM'},{date:'04-10',a1:'—',a2:'BHM'},
-  {date:'04-11',a1:'—',a2:'—'},{date:'04-12',a1:'—',a2:'—'},
+const OPS=[
+  {mt:'MT2026032800309',   label:'MCO 3/28', driver:'Don Williams',  route:'ATL-MCO-ATL',     planned:10,actual:7,  wait_min:90, drive:'6h 36m', period:1},
+  {mt:'MT2026033000472',   label:'BHM 3/30', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:4, actual:3.5,wait_min:95, drive:'7h 0m',  period:1},
+  {mt:'MT2026033100295',   label:'MCO 3/31', driver:'MSD001',        route:'ATL-MCO-ATL',     planned:10,actual:7,  wait_min:166,drive:'7h 3m',  period:1},
+  {mt:'MT2026033100487',   label:'BHM 3/31', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:4, actual:3.5,wait_min:52, drive:'8h 6m',  period:1},
+  {mt:'MT2026040100497',   label:'BHM 4/01', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:4, actual:3.5,wait_min:166,drive:'6h 0m',  period:1},
+  {mt:'MT2026040200293',   label:'MCO 4/02', driver:'MSD001',        route:'ATL-MCO-ATL',     planned:10,actual:8,  wait_min:230,drive:'8h 3m',  period:1},
+  {mt:'MT2026040200576①',  label:'BHM 4/02①',driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:4, actual:3.5,wait_min:140,drive:'6h 52m', period:1},
+  {mt:'MT2026040200576②',  label:'BHM 4/02②',driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:4, actual:3.5,wait_min:10, drive:'5h 53m', period:1},
+  {mt:'MT2026040400291',   label:'MCO 4/04', driver:'MSD001',        route:'ATL-MCO-ATL',     planned:10,actual:8,  wait_min:449,drive:'7h 41m', period:1},
+  {mt:'MT2026040600420',   label:'BHM 4/06', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:8, actual:5,  wait_min:212,drive:'4h 36m', period:2},
+  {mt:'MT2026040700456',   label:'BHM 4/07', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:8, actual:5,  wait_min:130,drive:'5h 0m',  period:2},
+  {mt:'MT2026040800480',   label:'BHM 4/08', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:8, actual:6,  wait_min:50, drive:'5h 58m', period:2},
+  {mt:'MT2026040900542',   label:'BHM 4/09', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:8, actual:6,  wait_min:36, drive:'3h 26m', period:2},
+  {mt:'MT2026041000476',   label:'BHM 4/10', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:8, actual:6,  wait_min:52, drive:'6h 10m', period:2},
+  {mt:'MT2026041100496',   label:'BHM 4/11', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:8, actual:7,  wait_min:22, drive:'6h 34m', period:2},
+  {mt:'MT2026041300421',   label:'BHM 4/13', driver:'Don Williams',  route:'ATL-BHM-ATL',     planned:8, actual:7,  wait_min:34, drive:'6h 48m', period:2},
+  {mt:'MT2026042800271',   label:'MCO 4/28', driver:'MSD001',        route:'ATL-MCO-ATL',     planned:10,actual:8,  wait_min:147,drive:'7h 51m', period:3},
+  {mt:'MT2026043000286',   label:'MCO 4/30', driver:'MSD001',        route:'ATL-MCO-ATL',     planned:10,actual:6,  wait_min:201,drive:'6h 30m', period:3},
+  {mt:'MT2026050500431',   label:'MCO 5/05', driver:'MSD001',        route:'ATL-MCO-ATL',     planned:10,actual:6,  wait_min:386,drive:'6h 22m', period:4},
+  {mt:'MT2026050700264',   label:'MCO 5/07', driver:'MSD001',        route:'ATL-MCO-ATL',     planned:10,actual:6,  wait_min:160,drive:'6h 27m', period:4},
+  {mt:'MT2026050200285',   label:'MCO 5/02', driver:'MSD001',        route:'ATL-MCO-OCF-ATL', planned:10,actual:6,  wait_min:117,drive:'6h 0m',  period:4},
+  {mt:'MT2026050500121',   label:'DFW 5/05', driver:'WED004/WED005', route:'CNO-DFW-LAX-CNO', planned:32,actual:24, wait_min:114,drive:'26h 45m',period:4},
+  {mt:'MT2026050600045',   label:'LAX 5/06', driver:'WED004/WED005', route:'CNO-DFW-LAX-CNO', planned:33,actual:25, wait_min:91, drive:'24h 10m',period:4},
 ];
 
-// ─── Filter state ──────────────────────────────────────────────────────────
-let fDriver='all', fRoute='all';
+const MILEAGE=[
+  {route:'ATL-MCO-ATL',    label:'MCO 4/05',act:889,sys:876},
+  {route:'ATL-MCO-ATL',    label:'MCO 4/24',act:884,sys:876},
+  {route:'ATL-MCO-ATL',    label:'MCO 4/28',act:878,sys:876},
+  {route:'ATL-MCO-ATL',    label:'MCO 4/30',act:881,sys:876},
+  {route:'ATL-MCO-ATL',    label:'MCO 5/02',act:881,sys:876},
+  {route:'ATL-MCO-ATL',    label:'MCO 5/05',act:875,sys:876},
+  {route:'ATL-MCO-ATL',    label:'MCO 5/07',act:874,sys:876},
+  {route:'CNO-DFW-LAX-CNO',label:'DFW 5/04',act:2881,sys:2873},
+];
+
+// ══════════════════════════════════════════════════════════
+// FILTER STATE & MULTI-SELECT
+// ══════════════════════════════════════════════════════════
+let fRoutes=null; // null = all
+let fPeriod='all';
 let charts={};
 
+document.addEventListener('click',e=>{
+  if(!document.getElementById('route-dd-wrap').contains(e.target))
+    document.getElementById('dd-panel').classList.remove('open');
+});
+function toggleDD(e){e.stopPropagation();document.getElementById('dd-panel').classList.toggle('open');}
+
+function onCkAll(el){
+  document.querySelectorAll('.ck-route').forEach(c=>c.checked=false);
+  fRoutes=null; updateDdDisplay(); applyFilters();
+}
+function onCkRoute(){
+  const cks=[...document.querySelectorAll('.ck-route:checked')];
+  document.getElementById('ck-all').checked=(cks.length===0);
+  fRoutes=cks.length?new Set(cks.map(c=>c.value)):null;
+  updateDdDisplay(); applyFilters();
+}
+function updateDdDisplay(){
+  const cks=[...document.querySelectorAll('.ck-route:checked')];
+  const el=document.getElementById('dd-display');
+  if(!cks.length) el.textContent='全部路线';
+  else if(cks.length===1) el.textContent=routeCode(cks[0].value)+': '+cks[0].value;
+  else el.textContent=`已选 ${cks.length} 条路线`;
+}
+document.querySelectorAll('.ck-route').forEach(c=>c.addEventListener('change',onCkRoute));
+
 function applyFilters(){
-  fDriver=document.getElementById('f-driver').value;
-  fRoute=document.getElementById('f-route').value;
-  renderKPIs();
+  fPeriod=document.getElementById('f-period').value;
   Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});
   charts={};
-  buildAllCharts();
-  renderCostTable();
-  renderOpsTable();
+  renderKPIs(); buildAllCharts(); renderCostTable(); renderOpsTable();
 }
-
-const filtered = arr => arr.filter(t => {
-  if(fDriver!=='all' && t.driver!==fDriver) return false;
-  if(fRoute!=='all'  && t.route!==fRoute)  return false;
+const filtered=arr=>arr.filter(t=>{
+  if(fRoutes&&!fRoutes.has(t.route))return false;
+  if(fPeriod!=='all'&&t.period!==+fPeriod)return false;
   return true;
 });
-const filteredOps = () => OPS.filter(o => {
-  if(fDriver!=='all' && o.driver!==fDriver) return false;
-  if(fRoute!=='all'  && o.route!==fRoute)  return false;
-  return true;
-});
+const filteredKnown=arr=>filtered(arr).filter(t=>t.total!=null);
 
-// ─── Formatters ────────────────────────────────────────────────────────────
-const f$ = v => '$' + v.toFixed(2);
-const f$0 = v => '$' + Math.round(v).toLocaleString();
-const fN = v => v.toLocaleString();
-const fP = v => (v*100).toFixed(1)+'%';
+// ══════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════
+const f$0=v=>'$'+Math.round(v).toLocaleString();
+const f$=v=>'$'+v.toFixed(2);
+const fP=v=>(v*100).toFixed(1)+'%';
 
-// ─── KPIs ──────────────────────────────────────────────────────────────────
-function renderKPIs(){
-  const data = filtered(TRIPS);
-  if(!data.length){ document.getElementById('kpi-section').innerHTML=''; return; }
-  const total   = data.reduce((s,t)=>s+t.total, 0);
-  const miles   = data.reduce((s,t)=>s+t.miles, 0);
-  const trips   = data.length;
-  const tp_total = data.reduce((s,t)=>s+THIRD_PARTY[t.route], 0);
-  const savings = tp_total - total;
-  const opsD    = filteredOps();
-  const bhmA    = opsD.filter(o=>o.route==='ATL-BHM-ATL');
-  const mcoA    = opsD.filter(o=>o.route==='ATL-MCO-ATL');
-  const bhmAvg  = bhmA.length ? bhmA.reduce((s,o)=>s+o.actual,0)/bhmA.length : null;
-  const mcoAvg  = mcoA.length ? mcoA.reduce((s,o)=>s+o.actual,0)/mcoA.length : null;
-  const avgWait = opsD.length ? opsD.reduce((s,o)=>s+o.wait_min,0)/opsD.length : 0;
-  const kpis = [
-    {cls:'c1', lbl:'完整总成本（7项）',val:f$0(total),     sub:`${trips}趟 · ${f$(total/miles)}/mi`},
-    {cls:'c2', lbl:'对比第三方节省',   val:f$0(savings),   sub:`节省率 ${fP(savings/tp_total)}`},
-    {cls:'c3', lbl:'总里程',           val:fN(miles)+' mi',sub:`${trips}趟合计`},
-    {cls:'c4', lbl:'BHM 均行驶时长',  val:bhmAvg?bhmAvg.toFixed(1)+'h':'—', sub:bhmAvg?(bhmAvg<=4?`计划4h · 准时完成`:`计划4h · 超${((bhmAvg-4)/4*100).toFixed(0)}%`):'无数据'},
-    {cls:'c5', lbl:'MCO 均行驶时长',  val:mcoAvg?mcoAvg.toFixed(1)+'h':'—', sub:mcoAvg?`计划10h · 节省${((10-mcoAvg)/10*100).toFixed(0)}%`:'无数据'},
-    {cls:'c6', lbl:'平均出发等待',     val:Math.round(avgWait)+'min',         sub:'最大: 449min (Troy 4/04)'},
-  ];
-  document.getElementById('kpi-section').innerHTML = kpis.map(k=>`
-    <div class="kpi ${k.cls}">
-      <div class="kpi-lbl">${k.lbl}</div>
-      <div class="kpi-val">${k.val}</div>
-      <div class="kpi-sub">${k.sub}</div>
-    </div>`).join('');
-}
-
-// ─── Chart options helper ──────────────────────────────────────────────────
-function cOpts({stacked=false, fmt='number'}={}){
-  return {
-    responsive:true, maintainAspectRatio:false,
-    plugins:{legend:{labels:{usePointStyle:true,padding:12,font:{size:11}}},
+function cOpts({stacked=false,fmt='number'}={}){
+  return{responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{usePointStyle:true,padding:10,font:{size:11}}},
       tooltip:{callbacks:{label:ctx=>{
-        let v=ctx.parsed.y!==undefined?ctx.parsed.y:ctx.parsed;
-        if(fmt==='$') return ` ${ctx.dataset.label}: $${v.toFixed(0)}`;
-        if(fmt==='h') return ` ${ctx.dataset.label}: ${v}h`;
-        if(fmt==='min') return ` ${ctx.dataset.label}: ${v}min`;
+        const v=ctx.parsed.y!==undefined?ctx.parsed.y:ctx.parsed;
+        if(fmt==='$')return ` ${ctx.dataset.label}: $${(+v).toFixed(0)}`;
+        if(fmt==='h')return ` ${ctx.dataset.label}: ${v}h`;
+        if(fmt==='min')return ` ${ctx.dataset.label}: ${v}min`;
         return ` ${ctx.dataset.label}: ${v}`;
       }}}
     },
     scales:{
       x:{grid:{display:false},ticks:{font:{size:10}}},
-      y:{stacked:stacked, beginAtZero:true, grid:{color:'#f0f4f8'},
-        ticks:{font:{size:10}, callback:v=>{
-          if(fmt==='$') return '$'+Math.round(v);
-          if(fmt==='h') return v+'h';
-          if(fmt==='min') return v+'m';
+      y:{stacked,beginAtZero:true,grid:{color:'#f0f4f8'},
+        ticks:{font:{size:10},callback:v=>{
+          if(fmt==='$')return '$'+Math.round(v);
+          if(fmt==='h')return v+'h';
+          if(fmt==='min')return v+'m';
           return v;
         }}
       }
@@ -495,155 +496,307 @@ function cOpts({stacked=false, fmt='number'}={}){
   };
 }
 
-// ─── Pie charts ────────────────────────────────────────────────────────────
-function buildPies(){
-  ['BHM','MCO'].forEach(key=>{
-    const uc = UNIT_COST[key];
-    const activeItems = uc.items.filter(i=>i.val>0.00001);
-    const totalPM = activeItems.reduce((s,i)=>s+i.val, 0);
-    const cpmEl = document.getElementById(key.toLowerCase()+'-cpm-total');
-    if(cpmEl) cpmEl.innerHTML = `$${totalPM.toFixed(3)} <span style="font-size:12px;font-weight:400;color:var(--grey)">/mi</span>`;
-    const ctx = document.getElementById(`pie-${key.toLowerCase()}`).getContext('2d');
-    charts[`pie${key}`] = new Chart(ctx,{
-      type:'doughnut',
-      data:{
-        labels: activeItems.map(i=>i.name),
-        datasets:[{data:activeItems.map(i=>+i.val.toFixed(4)), backgroundColor:activeItems.map(i=>i.color), borderColor:'#fff', borderWidth:2, hoverOffset:6}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,cutout:'56%',
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
-          const pct=((ctx.parsed/totalPM)*100).toFixed(1);
-          return ` ${ctx.label}: $${ctx.parsed.toFixed(3)}/mi (${pct}%)`;
-        }}}}
-      }
-    });
-    const legendEl = document.getElementById(`legend-${key.toLowerCase()}`);
-    legendEl.innerHTML = activeItems.map(i=>{
-      const pct=(i.val/totalPM*100).toFixed(1);
-      const bw=Math.round(i.val/totalPM*100);
-      return `<div class="legend-item">
-        <span class="legend-dot" style="background:${i.color}"></span>
-        <span class="legend-name">${i.name}</span>
-        <div class="legend-bar-wrap"><div class="legend-bar" style="width:${bw}%;background:${i.color}"></div></div>
-        <span class="legend-val">$${i.val.toFixed(3)}</span>
-        <span class="legend-pct">${pct}%</span>
-      </div>`;
-    }).join('');
+// ══════════════════════════════════════════════════════════
+// KPIs
+// ══════════════════════════════════════════════════════════
+function renderKPIs(){
+  const all=filtered(TRIPS), data=filteredKnown(TRIPS);
+  if(!all.length){document.getElementById('kpi-section').innerHTML='';return;}
+  const total=data.reduce((s,t)=>s+t.total,0);
+  const miles=data.reduce((s,t)=>s+t.miles,0);
+  const routes=[...new Set(all.map(t=>t.route))].length;
+  const tpTotal=data.reduce((s,t)=>s+(THIRD_PARTY[t.route]||0),0);
+  const savings=tpTotal-total;
+  const opsD=filtered(OPS);
+  const avgWait=opsD.length?opsD.reduce((s,o)=>s+o.wait_min,0)/opsD.length:0;
+  // Driver stats
+  const dm={};
+  all.forEach(t=>{dm[t.driver]=(dm[t.driver]||0)+1;});
+  const dList=Object.entries(dm).sort((a,b)=>b[1]-a[1]);
+  const dSub=dList.slice(0,3).map(([d,n])=>`${d}: ${n}趟`).join(' · ')+(dList.length>3?` 等${dList.length}位`:'');
+  const kpis=[
+    {cls:'c1',lbl:'已核算总成本',   val:f$0(total),   sub:`${data.length}/${all.length}趟 · ${data.length?f$(total/miles)+'/mi':'—'}`},
+    {cls:'c2',lbl:'对比第三方节省', val:tpTotal?f$0(savings):'—',sub:tpTotal?`节省率 ${fP(savings/tpTotal)}`:'部分路线无参考价'},
+    {cls:'c3',lbl:'总里程',         val:miles.toLocaleString()+' mi',sub:`${data.length}趟已核算`},
+    {cls:'c4',lbl:'路线数',         val:routes+'条',  sub:[...new Set(all.map(t=>t.route))].sort((a,b)=>routeCode(a).localeCompare(routeCode(b))).map(r=>routeCode(r)).join(' · ')},
+    {cls:'c5',lbl:'司机情况统计',   val:dList.length+'位',sub:dSub},
+    {cls:'c6',lbl:'平均出发等待',   val:Math.round(avgWait)+'min',sub:`共 ${opsD.length} 趟次记录`},
+  ];
+  document.getElementById('kpi-section').innerHTML=kpis.map(k=>`
+    <div class="kpi ${k.cls}">
+      <div class="kpi-lbl">${k.lbl}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// PIE + CPM-SIDE (shared pie-route-sel)
+// ══════════════════════════════════════════════════════════
+const PIE_KEYS  =['wages','fuel','loading','staff','lease_ins','other'];
+const PIE_LBLS  =['司机工资','油费','装卸费','人员成本','租赁+保险','其他'];
+const PIE_COLORS=['#4472c4','#ed7d31','#ffc000','#70ad47','#9b59b6','#a0aec0'];
+
+function buildPieSection(){buildPie();buildCPMSide();}
+
+function buildPie(){
+  if(charts.pie){try{charts.pie.destroy();}catch(e){} delete charts.pie;}
+  const sel=document.getElementById('pie-route-sel').value;
+  const trips=TRIPS.filter(t=>t.route===sel&&t.total!=null);
+  if(!trips.length){
+    document.getElementById('pie-cpm-total').textContent='无数据';
+    document.getElementById('legend-main').innerHTML='<p style="font-size:12px;color:var(--grey)">暂无已核算数据</p>';
+    return;
+  }
+  const avgMi=trips.reduce((s,t)=>s+t.miles,0)/trips.length;
+  const sums=PIE_KEYS.map(k=>trips.reduce((s,t)=>s+(t[k]||0),0)/trips.length);
+  const totAmt=sums.reduce((a,b)=>a+b,0);
+  const cpms=sums.map(v=>v/avgMi);
+  const totCpm=totAmt/avgMi;
+  document.getElementById('pie-cpm-total').innerHTML=
+    `$${totCpm.toFixed(3)}<span style="font-size:12px;font-weight:400;color:var(--grey)">/mi</span>`;
+  const ai=cpms.map((v,i)=>v>0.00001?i:-1).filter(i=>i>=0);
+  const ctx=document.getElementById('pie-main').getContext('2d');
+  charts.pie=new Chart(ctx,{type:'doughnut',
+    data:{labels:ai.map(i=>PIE_LBLS[i]),datasets:[{
+      data:ai.map(i=>+cpms[i].toFixed(5)),
+      backgroundColor:ai.map(i=>PIE_COLORS[i]),borderColor:'#fff',borderWidth:2,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'56%',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{
+        const pct=((c.parsed/totCpm)*100).toFixed(1);
+        return ` ${c.label}: $${c.parsed.toFixed(3)}/mi (${pct}%)`;
+      }}}}}
+  });
+  document.getElementById('legend-main').innerHTML=ai.map(i=>{
+    const v=cpms[i],pct=(v/totCpm*100).toFixed(1),bw=Math.round(v/totCpm*100);
+    return `<div class="legend-item">
+      <span class="legend-dot" style="background:${PIE_COLORS[i]}"></span>
+      <span class="legend-name">${PIE_LBLS[i]}</span>
+      <div class="legend-bar-wrap"><div class="legend-bar" style="width:${bw}%;background:${PIE_COLORS[i]}"></div></div>
+      <span class="legend-val">$${v.toFixed(3)}</span>
+      <span class="legend-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function buildCPMSide(){
+  if(charts.cpmSide){try{charts.cpmSide.destroy();}catch(e){} delete charts.cpmSide;}
+  const sel=document.getElementById('pie-route-sel').value;
+  const trips=TRIPS.filter(t=>t.route===sel&&t.total!=null&&(fPeriod==='all'||t.period===+fPeriod));
+  const ctx=document.getElementById('c-cpm-side').getContext('2d');
+  if(!trips.length) return;
+  const code=routeCode(sel), color=routeColor(sel);
+  charts.cpmSide=new Chart(ctx,{type:'bar',
+    data:{labels:trips.map(t=>t.date.slice(5)),datasets:[{
+      label:`${code} $/mi`,data:trips.map(t=>+t.cpm.toFixed(4)),
+      backgroundColor:color+'cc',borderColor:color,borderWidth:1.5,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        title:{display:true,text:`${code}: ${sel} — 各趟次成本/英里`,font:{size:11},color:'#718096'},
+        tooltip:{callbacks:{label:c=>` $/mi: $${c.parsed.y.toFixed(3)}`}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{beginAtZero:false,grid:{color:'#f0f4f8'},
+          ticks:{callback:v=>'$'+v.toFixed(3),font:{size:10}}}}}
   });
 }
 
-// ─── Stacked cost chart ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// STACKED COST (scrollable — canvas width auto-sized)
+// ══════════════════════════════════════════════════════════
 function buildStack(){
-  const data = filtered(TRIPS);
-  const ctx = document.getElementById('c-stack').getContext('2d');
-  const labels = data.map(t=>`${t.date.slice(5)} ${t.route.includes('BHM')?'BHM':'MCO'}`);
-  charts.stack = new Chart(ctx,{type:'bar',data:{labels,datasets:[
-    {label:'司机工资',  data:data.map(t=>+t.wages.toFixed(2)),   backgroundColor:'#4472c4bb',borderColor:'#4472c4',borderWidth:1},
-    {label:'油费',     data:data.map(t=>+t.fuel.toFixed(2)),    backgroundColor:'#ed7d31bb',borderColor:'#ed7d31',borderWidth:1},
-    {label:'装卸费',   data:data.map(t=>+t.loading.toFixed(2)), backgroundColor:'#ffc000bb',borderColor:'#ffc000',borderWidth:1},
-    {label:'人员成本', data:data.map(t=>+t.staff.toFixed(2)),   backgroundColor:'#70ad47bb',borderColor:'#70ad47',borderWidth:1},
-    {label:'车辆租赁', data:data.map(t=>+t.lease.toFixed(2)),   backgroundColor:'#9b59b6bb',borderColor:'#9b59b6',borderWidth:1},
-    {label:'保险费',   data:data.map(t=>+t.ins.toFixed(2)),     backgroundColor:'#0891b2bb',borderColor:'#0891b2',borderWidth:1},
-    {label:'其他',     data:data.map(t=>+t.other.toFixed(2)),   backgroundColor:'#a0aec0bb',borderColor:'#a0aec0',borderWidth:1},
-  ]},options:{...cOpts({stacked:true,fmt:'$'}),plugins:{...cOpts({stacked:true,fmt:'$'}).plugins,
-    tooltip:{mode:'index',intersect:false,callbacks:{
-      label:ctx=>`  ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`,
-      footer:items=>{const s=items.reduce((a,i)=>a+i.parsed.y,0);return`合计: $${s.toFixed(2)}`;}
-    }}
-  }}});
-}
-
-// ─── Vs 3rd party ─────────────────────────────────────────────────────────
-function buildVs3p(){
-  const bhm_avg = BHM_AVG;
-  const mco_avg = MCO_AVG;
-  const ctx = document.getElementById('c-vs3p').getContext('2d');
-  charts.vs3p = new Chart(ctx,{type:'bar',data:{
-    labels:['ATL–BHM–ATL (326mi)','ATL–MCO–ATL (876mi)'],
-    datasets:[
-      {label:'自营成本（完整）',data:[+bhm_avg.toFixed(2),+mco_avg.toFixed(2)], backgroundColor:'#2e75b6cc',borderColor:'#2e75b6',borderWidth:1,borderRadius:4},
-      {label:'第三方报价',       data:[1100,2000],                               backgroundColor:'#ed7d31cc',borderColor:'#ed7d31',borderWidth:1,borderRadius:4},
-    ]
-  },options:{...cOpts({fmt:'$'}),
-    plugins:{...cOpts({fmt:'$'}).plugins,tooltip:{callbacks:{
-      label:ctx=>`  ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(0)}`,
-      footer:items=>{
-        const s=items[0]?.parsed.y,t=items[1]?.parsed.y;
-        if(s&&t){const sv=t-s;return `节省: $${sv.toFixed(0)} (${(sv/t*100).toFixed(1)}%)`;}
-        return '';
-      }
-    }}}
-  }});
-}
-
-// ─── CPM chart ────────────────────────────────────────────────────────────
-function buildCPM(){
-  const data = filtered(TRIPS);
-  const ctx = document.getElementById('c-cpm').getContext('2d');
-  const colors = data.map(t=>t.route==='ATL-BHM-ATL'?'#2e75b6cc':'#ed7d31cc');
-  const borders= data.map(t=>t.route==='ATL-BHM-ATL'?'#2e75b6':'#ed7d31');
-  charts.cpm = new Chart(ctx,{type:'bar',data:{
-    labels:data.map(t=>`${t.date.slice(5)} ${t.route.includes('BHM')?'BHM':'MCO'}`),
-    datasets:[{label:'$/mi', data:data.map(t=>+t.cpm.toFixed(4)),
-      backgroundColor:colors, borderColor:borders, borderWidth:1, borderRadius:3}]
-  },options:{...cOpts({fmt:'$'}),
-    plugins:{...cOpts({fmt:'$'}).plugins,
-      legend:{display:false},
-      tooltip:{callbacks:{label:ctx=>`  $/mi: $${ctx.parsed.y.toFixed(3)}`}}
-    },
-    scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
-      y:{beginAtZero:false, grid:{color:'#f0f4f8'}, ticks:{callback:v=>'$'+v.toFixed(2), font:{size:10}}}
+  const data=filteredKnown(TRIPS);
+  // Dynamically widen canvas so bars don't crowd
+  const barW=44, minW=700;
+  const sizer=document.getElementById('stack-sizer');
+  sizer.style.width=Math.max(minW, data.length*barW)+'px';
+  const ctx=document.getElementById('c-stack').getContext('2d');
+  const labels=data.map(t=>`${t.date.slice(5)} ${routeCode(t.route)}`);
+  charts.stack=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {label:'司机工资', data:data.map(t=>+t.wages.toFixed(2)),   backgroundColor:'#4472c4bb',borderColor:'#4472c4',borderWidth:1},
+    {label:'油费',    data:data.map(t=>+t.fuel.toFixed(2)),    backgroundColor:'#ed7d31bb',borderColor:'#ed7d31',borderWidth:1},
+    {label:'装卸费',  data:data.map(t=>+t.loading.toFixed(2)), backgroundColor:'#ffc000bb',borderColor:'#ffc000',borderWidth:1},
+    {label:'人员成本',data:data.map(t=>+t.staff.toFixed(2)),   backgroundColor:'#70ad47bb',borderColor:'#70ad47',borderWidth:1},
+    {label:'租赁+保险',data:data.map(t=>+t.lease_ins.toFixed(2)),backgroundColor:'#9b59b6bb',borderColor:'#9b59b6',borderWidth:1},
+    {label:'其他',    data:data.map(t=>+t.other.toFixed(2)),   backgroundColor:'#a0aec0bb',borderColor:'#a0aec0',borderWidth:1},
+  ]},options:{...cOpts({stacked:true,fmt:'$'}),
+    responsive:true,maintainAspectRatio:false,
+    plugins:{...cOpts({stacked:true,fmt:'$'}).plugins,
+      tooltip:{mode:'index',intersect:false,callbacks:{
+        label:c=>` ${c.dataset.label}: $${c.parsed.y.toFixed(2)}`,
+        footer:items=>`合计: $${items.reduce((a,i)=>a+i.parsed.y,0).toFixed(2)}`
+      }}
     }
   }});
 }
 
-// ─── Savings chart ────────────────────────────────────────────────────────
-function buildSaving(){
-  const data = filtered(TRIPS);
-  const ctx = document.getElementById('c-saving').getContext('2d');
-  const savData = data.map(t=>{
-    const tp = THIRD_PARTY[t.route];
-    return +(tp - t.total).toFixed(2);
+// ══════════════════════════════════════════════════════════
+// VS 3RD PARTY + SAVINGS — merged combo chart
+// Bars: self avg (left) + third party (right) per route
+// Line: savings $ (right y-axis)
+// ══════════════════════════════════════════════════════════
+function buildVs3p(){
+  const routesToShow=(fRoutes?[...fRoutes]:[...new Set(TRIPS.filter(t=>t.total!=null).map(t=>t.route))]).sort((a,b)=>routeCode(a).localeCompare(routeCode(b)));
+  const labels=[],selfVals=[],thirdVals=[],savVals=[],savPct=[];
+  routesToShow.forEach(r=>{
+    const trips=filteredKnown(TRIPS).filter(t=>t.route===r);
+    if(!trips.length) return;
+    const avg=+(trips.reduce((s,t)=>s+t.total,0)/trips.length).toFixed(2);
+    const tp=THIRD_PARTY[r]; if(!tp) return;
+    const sv=+(tp-avg).toFixed(2);
+    labels.push(routeCode(r));
+    selfVals.push(avg); thirdVals.push(tp);
+    savVals.push(sv); savPct.push(+((sv/tp)*100).toFixed(1));
   });
-  const colors = savData.map(v=>v>=0?'#38a16988':'#e53e3e88');
-  const borders= savData.map(v=>v>=0?'#38a169':'#e53e3e');
-  charts.saving = new Chart(ctx,{type:'bar',data:{
-    labels:data.map(t=>`${t.date.slice(5)} ${t.route.includes('BHM')?'BHM':'MCO'}`),
-    datasets:[{label:'节省金额',data:savData,backgroundColor:colors,borderColor:borders,borderWidth:1,borderRadius:3}]
-  },options:{...cOpts({fmt:'$'}),plugins:{...cOpts({fmt:'$'}).plugins,legend:{display:false},
-    tooltip:{callbacks:{label:ctx=>{const v=ctx.parsed.y;return `  ${v>=0?'节省':'额外成本'}: $${Math.abs(v).toFixed(2)}`;
-  }}}},scales:{
-    x:{grid:{display:false},ticks:{font:{size:10}}},
-    y:{beginAtZero:true,grid:{color:'#f0f4f8'},ticks:{callback:v=>'$'+v,font:{size:10}}}
-  }}});
+  // Summary note
+  const noteStr=labels.map((l,i)=>`${l}: 省 $${savVals[i].toFixed(0)} (${savPct[i]}%)`).join('  ·  ');
+  document.getElementById('vs3p-note').textContent=noteStr||'暂无可对比数据';
+
+  if(charts.vs3p){try{charts.vs3p.destroy();}catch(e){} delete charts.vs3p;}
+  const ctx=document.getElementById('c-vs3p-combined').getContext('2d');
+  charts.vs3p=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'自营均价($)',   data:selfVals,  yAxisID:'yCost',
+         backgroundColor:'#2e75b6cc',borderColor:'#2e75b6',borderWidth:1.5,borderRadius:5,order:2},
+        {label:'第三方报价($)', data:thirdVals, yAxisID:'yCost',
+         backgroundColor:'#ed7d31cc',borderColor:'#ed7d31',borderWidth:1.5,borderRadius:5,order:2},
+        {label:'趟次节省($)',   data:savVals,   yAxisID:'ySav',
+         type:'line',borderColor:'#38a169',backgroundColor:'#38a16933',
+         borderWidth:2.5,pointRadius:7,pointHoverRadius:9,
+         pointBackgroundColor:savVals.map(v=>v>=0?'#38a169':'#e53e3e'),
+         pointBorderColor:'#fff',pointBorderWidth:2,
+         fill:false,tension:0.2,order:1},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top',labels:{usePointStyle:true,padding:10,font:{size:11}}},
+        tooltip:{callbacks:{
+          label:c=>{
+            if(c.dataset.yAxisID==='ySav'){
+              const v=c.parsed.y;
+              return ` ${c.dataset.label}: ${v>=0?'':'⚠️ '}$${v.toFixed(0)} (${savPct[c.dataIndex]}%)`;
+            }
+            return ` ${c.dataset.label}: $${c.parsed.y.toFixed(0)}`;
+          },
+          afterBody:items=>{
+            const i=items[0]?.dataIndex;
+            if(i==null||selfVals[i]==null||thirdVals[i]==null) return [];
+            return [`── ${labels[i]} 每趟节省 $${savVals[i].toFixed(0)}，节省率 ${savPct[i]}%`];
+          }
+        }}
+      },
+      scales:{
+        yCost:{type:'linear',position:'left',beginAtZero:true,grid:{color:'#f0f4f8'},
+          ticks:{callback:v=>'$'+Math.round(v),font:{size:10}},
+          title:{display:true,text:'每趟均价 ($)',font:{size:10},color:'var(--grey)'}},
+        ySav:{type:'linear',position:'right',grid:{drawOnChartArea:false},
+          ticks:{callback:v=>'$'+Math.round(v),font:{size:10}},
+          title:{display:true,text:'节省金额 ($)',font:{size:10},color:'#38a169'}},
+        x:{grid:{display:false},ticks:{font:{size:11}}}
+      }
+    }
+  });
+}
+// stub — no longer used separately
+function buildSaving(){}
+
+// ══════════════════════════════════════════════════════════
+// TREND (total) + CPM TREND — shared builder
+// ══════════════════════════════════════════════════════════
+function buildTrendChart(canvasId,valKey,chartKey,fmtFn){
+  const known=filteredKnown(TRIPS);
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  const allDates=[...new Set(known.map(t=>t.date))].sort();
+  const labels=allDates.map(d=>d.slice(5));
+  const activeRoutes=fRoutes?[...fRoutes].filter(r=>known.some(t=>t.route===r))
+    :[...new Set(known.map(t=>t.route))];
+  const datasets=activeRoutes.map(route=>{
+    const rt=known.filter(t=>t.route===route);
+    if(!rt.length) return null;
+    const dm={};
+    rt.forEach(t=>{dm[t.date]=(dm[t.date]||[]);dm[t.date].push(t[valKey]);});
+    const vals=allDates.map(d=>dm[d]?+(dm[d].reduce((a,b)=>a+b,0)/dm[d].length).toFixed(4):null);
+    const ch=routeColor(route);
+    return{label:routeCode(route),data:vals,borderColor:ch,backgroundColor:ch+'44',
+      borderWidth:2.5,pointRadius:5,pointHoverRadius:7,fill:false,tension:0.2,spanGaps:true};
+  }).filter(Boolean);
+  charts[chartKey]=new Chart(ctx,{type:'line',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{position:'top',labels:{usePointStyle:true,padding:10,font:{size:10}}},
+      tooltip:{mode:'index',intersect:false,callbacks:{label:c=>` ${c.dataset.label}: ${fmtFn(+c.parsed.y)}`}}
+    },
+    scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:45}},
+      y:{beginAtZero:false,grid:{color:'#f0f4f8'},ticks:{callback:v=>fmtFn(v),font:{size:10}}}}
+  }});
+}
+function buildTrend(){buildTrendChart('c-trend','total','trend',v=>'$'+Math.round(v));}
+function buildCPMTrend(){buildTrendChart('c-cpm-trend','cpm','cpmTrend',v=>'$'+v.toFixed(3));}
+
+// ══════════════════════════════════════════════════════════
+// MILEAGE
+// ══════════════════════════════════════════════════════════
+function buildMileage(){
+  if(charts.mileage){try{charts.mileage.destroy();}catch(e){} delete charts.mileage;}
+  const mData=fRoutes?MILEAGE.filter(m=>fRoutes.has(m.route)):MILEAGE;
+  const ctx=document.getElementById('c-mileage').getContext('2d');
+  if(!mData.length){
+    charts.mileage=new Chart(ctx,{type:'bar',data:{labels:['无记录'],datasets:[{data:[0],label:''}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{title:{display:true,text:'当前路线暂无里程核查记录',font:{size:13}}}}});
+    return;
+  }
+  charts.mileage=new Chart(ctx,{type:'bar',
+    data:{labels:mData.map(m=>m.label),datasets:[
+      {label:'实际里程',data:mData.map(m=>m.act),backgroundColor:mData.map(m=>routeColor(m.route)+'99'),borderColor:mData.map(m=>routeColor(m.route)),borderWidth:2,borderRadius:4},
+      {label:'系统预计',data:mData.map(m=>m.sys),backgroundColor:'#e2e8f055',borderColor:'#71809699',borderWidth:2,borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:10,font:{size:11}}},
+        tooltip:{mode:'index',intersect:false,callbacks:{
+          label:c=>` ${c.dataset.label}: ${c.parsed.y} mi`,
+          footer:items=>{if(items.length>=2){const d=items[0].parsed.y-items[1].parsed.y;return `差异: ${d>0?'+':''}${d} mi (${(d/items[1].parsed.y*100).toFixed(1)}%)`;}return '';}
+        }}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+' mi',font:{size:10}}}}}
+  });
 }
 
-// ─── On-time chart ────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// ONTIME (实际行驶时长 vs 第三方时长) + WAIT
+// ══════════════════════════════════════════════════════════
 function buildOntime(){
-  const data = filteredOps();
-  const ctx = document.getElementById('c-ontime').getContext('2d');
-  charts.ontime = new Chart(ctx,{type:'bar',data:{
-    labels:data.map(o=>o.label),
+  const data=filtered(OPS);
+  const ctx=document.getElementById('c-ontime').getContext('2d');
+  charts.ontime=new Chart(ctx,{type:'bar',data:{
+    labels:data.map(o=>routeCode(o.route)+' '+o.label.split(' ').slice(1).join(' ')),
     datasets:[
-      {label:'计划(h)',  data:data.map(o=>o.planned), backgroundColor:'#93c5fdcc',borderColor:'#3b82f6',borderWidth:1,borderRadius:3},
-      {label:'实际(h)',  data:data.map(o=>o.actual),  backgroundColor:data.map(o=>o.actual>o.planned?'#fca5a5cc':'#86efaccc'),
+      {label:'第三方参考时长(h)',data:data.map(o=>o.planned),backgroundColor:'#93c5fdcc',borderColor:'#3b82f6',borderWidth:1,borderRadius:3},
+      {label:'自营实际行驶(h)', data:data.map(o=>o.actual),
+       backgroundColor:data.map(o=>o.actual>o.planned?'#fca5a5cc':'#86efaccc'),
        borderColor:data.map(o=>o.actual>o.planned?'#ef4444':'#22c55e'),borderWidth:1,borderRadius:3},
     ]
-  },options:{...cOpts({fmt:'h'}),plugins:{...cOpts({fmt:'h'}).plugins,
-    tooltip:{mode:'index',intersect:false,callbacks:{
-      label:ctx=>`  ${ctx.dataset.label}: ${ctx.parsed.y}h`,
-      footer:items=>{const pl=items[0]?.parsed.y,ac=items[1]?.parsed.y;
-        if(pl&&ac){const d=ac-pl;return d>0?`⚠️ 超时 +${d}h`:`✅ 节省 ${Math.abs(d)}h`;}return'';}
-    }}
-  }}});
+  },options:{...cOpts({fmt:'h'}),
+    plugins:{...cOpts({fmt:'h'}).plugins,
+      tooltip:{mode:'index',intersect:false,callbacks:{
+        label:c=>` ${c.dataset.label}: ${c.parsed.y}h`,
+        footer:items=>{const pl=items[0]?.parsed.y,ac=items[1]?.parsed.y;
+          if(pl!=null&&ac!=null){const d=+(ac-pl).toFixed(1);
+            return d>0?`⚠️ 超时 +${d}h`:`✅ 节省 ${Math.abs(d)}h`;}return'';}
+      }}
+    }
+  }});
 }
-
-// ─── Wait chart ──────────────────────────────────────────────────────────
 function buildWait(){
-  const data = filteredOps();
-  const ctx = document.getElementById('c-wait').getContext('2d');
-  charts.wait = new Chart(ctx,{type:'bar',data:{
-    labels:data.map(o=>o.label),
+  const data=filtered(OPS);
+  const ctx=document.getElementById('c-wait').getContext('2d');
+  charts.wait=new Chart(ctx,{type:'bar',data:{
+    labels:data.map(o=>routeCode(o.route)+' '+o.label.split(' ').slice(1).join(' ')),
     datasets:[{label:'等待(min)',data:data.map(o=>o.wait_min),
       backgroundColor:data.map(o=>o.wait_min>180?'#fca5a5cc':o.wait_min>60?'#fde68acc':'#93c5fdcc'),
       borderColor:data.map(o=>o.wait_min>180?'#ef4444':o.wait_min>60?'#f59e0b':'#3b82f6'),
@@ -651,182 +804,128 @@ function buildWait(){
   },options:cOpts({fmt:'min'})});
 }
 
-// ─── Fuel charts ──────────────────────────────────────────────────────────
-function buildFuel(){
-  // Metric cards
-  const totalGal  = FUEL.reduce((s,f)=>s+f.gal,0);
-  const totalCost = FUEL.reduce((s,f)=>s+f.cost,0);
-  const avgCpg    = totalCost/totalGal;
-  const validMpg  = FUEL.filter(f=>f.gal>0);
-  const avgMpg    = validMpg.reduce((s,f)=>s+parseFloat(f.mpg),0)/validMpg.length;
-  document.getElementById('fuel-metrics').innerHTML=`
-    <div class="fuel-metric"><div class="fm-val">${totalGal.toFixed(1)} gal</div><div class="fm-lbl">总加油量</div></div>
-    <div class="fuel-metric"><div class="fm-val">$${totalCost.toFixed(0)}</div><div class="fm-lbl">总油费</div></div>
-    <div class="fuel-metric"><div class="fm-val">$${avgCpg.toFixed(2)}</div><div class="fm-lbl">均价/加仑</div></div>
-    <div class="fuel-metric"><div class="fm-val">${avgMpg.toFixed(2)}</div><div class="fm-lbl">综合MPG</div></div>`;
-
-  // Bar chart: gal + cost
-  const ctx = document.getElementById('c-fuel').getContext('2d');
-  charts.fuel = new Chart(ctx,{type:'bar',data:{
-    labels:FUEL.map(f=>`${f.date.slice(5)} ${f.driver.split(' ')[0]}<br>${f.note}`),
-    datasets:[
-      {label:'加油量(gal)',data:FUEL.map(f=>f.gal), backgroundColor:'#2e75b6bb',borderColor:'#2e75b6',borderWidth:1,borderRadius:3, yAxisID:'y'},
-      {label:'金额($)',    data:FUEL.map(f=>f.cost),backgroundColor:'#ed7d31bb',borderColor:'#ed7d31',borderWidth:1,borderRadius:3, yAxisID:'y2'},
-    ]
-  },options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{usePointStyle:true,padding:12,font:{size:11}}},
-      tooltip:{mode:'index',intersect:false,callbacks:{
-        label:ctx=>ctx.datasetIndex===0?`  加油量: ${ctx.parsed.y} gal`:`  金额: $${ctx.parsed.y}`,
-        footer:items=>{const f=FUEL[items[0].dataIndex];return `$${f.cpg}/gal · ${f.note}`;}
-      }}
-    },
-    scales:{
-      x:{grid:{display:false},ticks:{font:{size:10}}},
-      y:{beginAtZero:true,position:'left',grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'gal',font:{size:10}}},
-      y2:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{callback:v=>'$'+v,font:{size:10}}}
-    }
-  }});
-}
-
-function buildMPG(){
-  const ctx = document.getElementById('c-mpg').getContext('2d');
-  const validFuel = FUEL.filter(f=>f.gal>0);
-  const colors = validFuel.map(f=>f.driver==='Don Williams'?'#2e75b6cc':'#ed7d31cc');
-  charts.mpg = new Chart(ctx,{type:'bar',data:{
-    labels:validFuel.map(f=>`${f.date.slice(5)}\n${f.driver.split(' ')[0]}`),
-    datasets:[{label:'英里/加仑',data:validFuel.map(f=>parseFloat(f.mpg)),
-      backgroundColor:colors,borderColor:colors.map(c=>c.replace('cc','ff')),borderWidth:1,borderRadius:3}]
-  },options:{...cOpts(),plugins:{...cOpts().plugins,
-    legend:{display:false},
-    tooltip:{callbacks:{label:ctx=>`  MPG: ${ctx.parsed.y} · ${validFuel[ctx.dataIndex].note}`,
-      afterLabel:ctx=>{const f=validFuel[ctx.dataIndex];return `  实际/计划里程差: +${f.actual_mi-f.planned_mi}mi`;}
-    }}
-  },scales:{
-    x:{grid:{display:false},ticks:{font:{size:10}}},
-    y:{beginAtZero:true,grid:{color:'#f0f4f8'},ticks:{callback:v=>v+' mpg',font:{size:10}}}
-  }}});
-}
-
-// ─── Calendar ─────────────────────────────────────────────────────────────
-function buildCalendar(){
-  const grid = document.getElementById('cal-grid');
-  let html = '<div class="cal-hdr"></div>';
-  CAL_DATA.forEach(d=>html+=`<div class="cal-hdr">${d.date}</div>`);
-  // Car 1 (Troy)
-  html += '<div class="cal-lbl">🚛 车1<br><small style="color:#9a3412">Troy</small></div>';
-  CAL_DATA.forEach(d=>{
-    const v=d.a1;
-    const cls = v==='MCO'?'mco':v==='BHM'?'bhm':v==='坏车'?'broken':'rest';
-    html+=`<div class="cal-cell ${cls}">${v}</div>`;
-  });
-  // Car 2 (Don)
-  html += '<div class="cal-lbl">🚛 车2<br><small style="color:#1e40af">Don</small></div>';
-  CAL_DATA.forEach(d=>{
-    const v=d.a2;
-    const cls = v==='MCO'?'mco':v==='BHM'?'bhm':v==='坏车'?'broken':v==='休息'?'rest':'rest';
-    html+=`<div class="cal-cell ${cls}">${v==='—'?'':v}</div>`;
-  });
-  grid.innerHTML = html;
-}
-
-// ─── Cost Table ────────────────────────────────────────────────────────────
-let sortCol='id', sortDir='asc';
+// ══════════════════════════════════════════════════════════
+// COST TABLE (local filters: route + period + driver)
+// ══════════════════════════════════════════════════════════
+let sortCol='no',sortDir='asc';
 function renderCostTable(){
-  const data = [...filtered(TRIPS)].sort((a,b)=>{
-    const av=a[sortCol], bv=b[sortCol];
-    return sortDir==='asc' ? (av<bv?-1:av>bv?1:0) : (av>bv?-1:av<bv?1:0);
+  const tcR=document.getElementById('tc-route').value;
+  const tcP=document.getElementById('tc-period').value;
+  const tcD=document.getElementById('tc-driver').value;
+  const data=[...TRIPS].filter(t=>{
+    if(tcR!=='all'&&t.route!==tcR) return false;
+    if(tcP!=='all'&&t.period!==+tcP) return false;
+    if(tcD!=='all'&&t.driver!==tcD) return false;
+    return true;
+  }).sort((a,b)=>{
+    const av=a[sortCol]??'',bv=b[sortCol]??'';
+    return sortDir==='asc'?(av<bv?-1:av>bv?1:0):(av>bv?-1:av<bv?1:0);
   });
-  const arrow = col => col===sortCol ? (sortDir==='asc'?' ▲':' ▼') : '';
-  const th = (col,label,align='right') => `<th onclick="sortBy('${col}')" style="text-align:${align}">${label}${arrow(col)}</th>`;
-  let html = `<table><thead><tr>
-    ${th('id','#','left')} ${th('date','日期','left')} ${th('driver','司机','left')} ${th('route','线路','left')}
-    ${th('miles','里程')} ${th('wages','工资')} ${th('fuel','油费')} ${th('loading','装卸')}
-    ${th('staff','人员')} ${th('lease','租赁')} ${th('ins','保险')} ${th('other','其他')}
-    ${th('total','合计总成本')} ${th('cpm','$/mi')}
+  const arrow=col=>col===sortCol?(sortDir==='asc'?' ▲':' ▼'):'';
+  const th=(col,lbl)=>`<th onclick="sortBy('${col}')">${lbl}${arrow(col)}</th>`;
+  let html=`<table><thead><tr>
+    <th onclick="sortBy('no')" style="text-align:left">#${arrow('no')}</th>
+    <th onclick="sortBy('date')" style="text-align:left">日期${arrow('date')}</th>
+    <th style="text-align:left">司机</th><th style="text-align:left">路线</th>
+    ${th('miles','里程')}${th('wages','工资')}${th('fuel','油费')}${th('loading','装卸')}
+    ${th('staff','人员')}${th('lease_ins','租赁+保险')}${th('other','其他')}
+    ${th('total','总成本')}${th('cpm','$/mi')}
   </tr></thead><tbody>`;
   data.forEach(t=>{
     const tp=THIRD_PARTY[t.route];
-    const sv=tp-t.total;
-    const svBadge=sv>=0?`<span class="chip-good">省$${sv.toFixed(0)}</span>`:`<span class="chip-bad">超$${Math.abs(sv).toFixed(0)}</span>`;
+    const sv=tp&&t.total!=null?+(tp-t.total).toFixed(2):null;
+    const svBadge=sv!=null?(sv>=0?`<span class="chip-good">省$${sv.toFixed(0)}</span>`:`<span class="chip-bad">超$${Math.abs(sv).toFixed(0)}</span>`):'';
+    const rs=ROUTE_STYLE[t.route]||{bg:'#f3f4f6',txt:'#374151'};
+    const code=routeCode(t.route);
     html+=`<tr>
-      <td>${t.id}</td>
-      <td>${t.date}</td>
-      <td>${t.driver}</td>
-      <td><span class="pill ${t.route.includes('BHM')?'bhm':'mco'}">${t.route.includes('BHM')?'BHM':'MCO'}</span></td>
-      <td>${t.miles}</td>
-      <td>$${t.wages.toFixed(2)}</td>
-      <td>$${t.fuel.toFixed(2)}</td>
+      <td>${t.no}</td><td>${t.date}</td>
+      <td style="font-size:11px">${t.driver}</td>
+      <td>
+        <span class="pill" style="background:${rs.bg};color:${rs.txt}">${code}</span>
+        <span style="font-size:10px;color:var(--grey);margin-left:3px">${t.route}</span>
+      </td>
+      <td>${t.miles!=null?t.miles+' mi':'<span class="na">—</span>'}</td>
+      <td>${t.wages!=null?'$'+t.wages.toFixed(2):'<span class="na">—</span>'}</td>
+      <td>${t.fuel!=null?'$'+t.fuel.toFixed(2):'<span class="na">—</span>'}</td>
       <td>${t.loading>0?'$'+t.loading.toFixed(2):'—'}</td>
-      <td>$${t.staff.toFixed(2)}</td>
-      <td>$${t.lease.toFixed(2)}</td>
-      <td>$${t.ins.toFixed(2)}</td>
+      <td>$${t.staff.toFixed(2)}</td><td>$${t.lease_ins.toFixed(2)}</td>
       <td>${t.other>0?'$'+t.other.toFixed(2)+'<br><span style="font-size:9px;color:#9a3412">'+t.other_type+'</span>':'—'}</td>
-      <td style="font-weight:700"><b>$${t.total.toFixed(2)}</b><br>${svBadge}</td>
-      <td>$${t.cpm.toFixed(3)}</td>
+      <td><b>${t.total!=null?'$'+t.total.toFixed(2):'<span class="na">待核算</span>'}</b>${svBadge?'<br>'+svBadge:''}</td>
+      <td>${t.cpm!=null?'$'+t.cpm.toFixed(3):'<span class="na">—</span>'}</td>
     </tr>`;
   });
-  // Total row
-  const tot = data.reduce((s,t)=>s+t.total,0);
-  const totMi = data.reduce((s,t)=>s+t.miles,0);
-  const totTP = data.reduce((s,t)=>s+THIRD_PARTY[t.route],0);
+  const known=data.filter(t=>t.total!=null);
+  const tot=known.reduce((s,t)=>s+t.total,0);
+  const totMi=known.reduce((s,t)=>s+t.miles,0);
+  const totTP=known.reduce((s,t)=>s+(THIRD_PARTY[t.route]||0),0);
   html+=`<tr class="total-r">
-    <td colspan="4">合计 (${data.length}趟)</td>
-    <td>${totMi}</td>
-    <td>$${data.reduce((s,t)=>s+t.wages,0).toFixed(2)}</td>
-    <td>$${data.reduce((s,t)=>s+t.fuel,0).toFixed(2)}</td>
-    <td>$${data.reduce((s,t)=>s+t.loading,0).toFixed(2)}</td>
-    <td>$${data.reduce((s,t)=>s+t.staff,0).toFixed(2)}</td>
-    <td>$${data.reduce((s,t)=>s+t.lease,0).toFixed(2)}</td>
-    <td>$${data.reduce((s,t)=>s+t.ins,0).toFixed(2)}</td>
-    <td>$${data.reduce((s,t)=>s+t.other,0).toFixed(2)}</td>
-    <td><b>$${tot.toFixed(2)}</b><br><span class="chip-good">省$${(totTP-tot).toFixed(0)}</span></td>
-    <td>$${(tot/totMi).toFixed(3)}</td>
-  </tr></tbody></table>`;
-  document.getElementById('tbl-cost').innerHTML = html;
+    <td colspan="4">合计（${known.length}/${data.length}趟已核算）</td>
+    <td>${totMi.toLocaleString()}</td>
+    <td>$${known.reduce((s,t)=>s+t.wages,0).toFixed(2)}</td>
+    <td>$${known.reduce((s,t)=>s+t.fuel,0).toFixed(2)}</td>
+    <td>$${known.reduce((s,t)=>s+t.loading,0).toFixed(2)}</td>
+    <td>$${known.reduce((s,t)=>s+t.staff,0).toFixed(2)}</td>
+    <td>$${known.reduce((s,t)=>s+t.lease_ins,0).toFixed(2)}</td>
+    <td>$${known.reduce((s,t)=>s+t.other,0).toFixed(2)}</td>
+    <td><b>$${tot.toFixed(2)}</b>${totTP?`<br><span class="chip-good">省$${(totTP-tot).toFixed(0)}</span>`:''}</td>
+    <td>${totMi?'$'+(tot/totMi).toFixed(3):'—'}</td>
+  </tr></tbody></table>
+  <p class="cost-note">* 租赁+保险按实际账单录入 · "待核算"行程里程数据尚未录入</p>`;
+  document.getElementById('tbl-cost').innerHTML=html;
 }
-window.sortBy = function(col){
-  if(sortCol===col) sortDir=sortDir==='asc'?'desc':'asc'; else {sortCol=col; sortDir='asc';}
+window.sortBy=function(col){
+  if(sortCol===col)sortDir=sortDir==='asc'?'desc':'asc';else{sortCol=col;sortDir='asc';}
   renderCostTable();
 };
 
-// ─── Ops Table ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// OPS TABLE (local filters: route + period)
+// ══════════════════════════════════════════════════════════
 function renderOpsTable(){
-  const data = filteredOps();
+  const toR=document.getElementById('to-route').value;
+  const toP=document.getElementById('to-period').value;
+  const data=OPS.filter(o=>{
+    if(toR!=='all'&&o.route!==toR) return false;
+    if(toP!=='all'&&o.period!==+toP) return false;
+    return true;
+  });
   let html=`<table><thead><tr>
-    <th style="text-align:left">任务编码</th><th style="text-align:left">司机</th><th style="text-align:left">线路</th>
-    <th>计划时长</th><th>实际时长</th><th>超/节省</th><th>等待时长</th><th>行驶时长</th><th>单程里程</th>
+    <th style="text-align:left">任务编码</th><th style="text-align:left">司机</th>
+    <th style="text-align:left">路线</th>
+    <th>第三方参考时长</th><th>自营实际行驶</th><th>差值</th><th>等待时长</th><th>行驶时长</th>
   </tr></thead><tbody>`;
   data.forEach(o=>{
-    const diff=o.actual-o.planned;
+    const diff=+(o.actual-o.planned).toFixed(1);
     const diffBadge=diff>0?`<span class="chip-bad">+${diff}h</span>`:`<span class="chip-good">${diff}h</span>`;
-    const waitBadge=o.wait_min>180?`<span class="chip-bad">${o.wait_min}min</span>`:o.wait_min>60?`<span class="chip-warn">${o.wait_min}min</span>`:`<span class="chip-good">${o.wait_min}min</span>`;
+    const wm=o.wait_min;
+    const waitBadge=wm>180?`<span class="chip-bad">${wm}min</span>`:wm>60?`<span class="chip-warn">${wm}min</span>`:`<span class="chip-good">${wm}min</span>`;
+    const rs=ROUTE_STYLE[o.route]||{bg:'#f3f4f6',txt:'#374151'};
     html+=`<tr>
-      <td>${o.mt}</td>
-      <td>${o.driver}</td>
-      <td><span class="pill ${o.route.includes('BHM')?'bhm':'mco'}">${o.label}</span></td>
-      <td>${o.planned}h</td><td>${o.actual}h</td><td>${diffBadge}</td>
-      <td>${waitBadge}</td><td>${o.drive}</td><td>${o.miles}mi</td>
+      <td style="font-family:monospace;font-size:10px">${o.mt}</td>
+      <td style="font-size:11px">${o.driver}</td>
+      <td>
+        <span class="pill" style="background:${rs.bg};color:${rs.txt}">${routeCode(o.route)}</span>
+        <small style="color:var(--grey);margin-left:3px">${o.label}</small>
+      </td>
+      <td>${o.planned}h</td><td>${o.actual}h</td>
+      <td>${diffBadge}</td><td>${waitBadge}</td><td>${o.drive}</td>
     </tr>`;
   });
   html+='</tbody></table>';
   document.getElementById('tbl-ops').innerHTML=html;
 }
 
-// ─── Build all charts ──────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// BUILD ALL + INIT
+// ══════════════════════════════════════════════════════════
 function buildAllCharts(){
-  buildPies();
-  buildStack();
-  buildVs3p();
-  buildCPM();
-  buildSaving();
-  buildOntime();
-  buildWait();
-  buildFuel();
-  buildMPG();
-  buildCalendar();
+  buildPieSection();
+  buildStack(); buildVs3p(); buildSaving();
+  buildTrend(); buildCPMTrend();
+  buildMileage();
+  buildOntime(); buildWait();
 }
 
-// ─── Init ──────────────────────────────────────────────────────────────────
 renderKPIs();
 buildAllCharts();
 renderCostTable();
