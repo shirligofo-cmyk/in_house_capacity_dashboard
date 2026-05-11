@@ -362,7 +362,7 @@ const TRIPS = [
   {no:18,mt:'MT2026042800271',                date:'2026-04-28',period:3,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:876, wages:744.60,loading:0,  fuel:509.83,staff:100,lease_ins:392.21,other:0,   other_type:''},
   {no:19,mt:'MT2026043000286',                date:'2026-04-29',period:3,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:876, wages:744.60,loading:0,  fuel:509.83,staff:100,lease_ins:392.21,other:0,   other_type:''},
   {no:20,mt:'MT2026050100185',                date:'2026-04-30',period:3,driver:'MSD001',        route:'ATL-MCO-OCF-ATL', miles:876, wages:744.60,loading:0,  fuel:509.83,staff:100,lease_ins:392.21,other:50,  other_type:'Stop Fee'},
-  {no:21,mt:'MT2026050200285',                date:'2026-05-02',period:4,driver:'MSD001',        route:'ATL-MCO-OCF-ATL', miles:881, wages:748.85,loading:0,  fuel:589.78,staff:100,lease_ins:392.21,other:0,   other_type:''},
+  {no:21,mt:'MT2026050200285',                date:'2026-05-02',period:4,driver:'MSD001',        route:'ATL-MCO-OCF-ATL', miles:881, wages:748.85,loading:0,  fuel:589.78,staff:100,lease_ins:392.21,other:0,   other_type:'',credit:350,credit_type:'OCF 收益抵扣'},
   {no:22,mt:'MT2026050500431',                date:'2026-05-05',period:4,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:875, wages:743.75,loading:0,  fuel:585.76,staff:100,lease_ins:392.21,other:0,   other_type:''},
   {no:23,mt:'MT2026050700264',                date:'2026-05-07',period:4,driver:'MSD001',        route:'ATL-MCO-ATL',     miles:874, wages:742.90,loading:0,  fuel:585.09,staff:100,lease_ins:392.21,other:0,   other_type:''},
   {no:24,mt:'MT2026050500121/MT2026050600045',date:'2026-05-05',period:4,driver:'WED004/WED005', route:'CNO-DFW-LAX-CNO', miles:2881,wages:2448.85,loading:0,fuel:1928.67,staff:100,lease_ins:588.32,other:0,other_type:''},
@@ -371,9 +371,10 @@ const TRIPS = [
 ];
 TRIPS.forEach(t=>{
   if(t.wages!=null&&t.fuel!=null){
-    t.total=+(t.wages+t.loading+t.fuel+t.staff+t.lease_ins+t.other).toFixed(2);
+    t.gross=+(t.wages+t.loading+t.fuel+t.staff+t.lease_ins+t.other).toFixed(2);
+    t.total=+(t.gross-(t.credit||0)).toFixed(2);
     t.cpm=+(t.total/t.miles).toFixed(6);
-  } else { t.total=null; t.cpm=null; }
+  } else { t.total=null; t.gross=null; t.cpm=null; }
 });
 
 const THIRD_PARTY={
@@ -550,25 +551,44 @@ function buildPie(){
   }
   const avgMi=trips.reduce((s,t)=>s+t.miles,0)/trips.length;
   const sums=PIE_KEYS.map(k=>trips.reduce((s,t)=>s+(t[k]||0),0)/trips.length);
-  const totAmt=sums.reduce((a,b)=>a+b,0);
+  const grossAmt=sums.reduce((a,b)=>a+b,0);
+  const avgCredit=trips.reduce((s,t)=>s+(t.credit||0),0)/trips.length;
+  const creditCpm=avgCredit/avgMi;
+  const grossCpm=grossAmt/avgMi;
+  const netCpm=grossCpm-creditCpm;
   const cpms=sums.map(v=>v/avgMi);
-  const totCpm=totAmt/avgMi;
-  document.getElementById('pie-cpm-total').innerHTML=
-    `$${totCpm.toFixed(3)}<span style="font-size:12px;font-weight:400;color:var(--grey)">/mi</span>`;
+
+  const label=creditCpm>0.00001?
+    `$${netCpm.toFixed(3)}<span style="font-size:12px;font-weight:400;color:var(--grey)">/mi (净)</span>`:
+    `$${grossCpm.toFixed(3)}<span style="font-size:12px;font-weight:400;color:var(--grey)">/mi</span>`;
+  document.getElementById('pie-cpm-total').innerHTML=label;
+
   const ai=cpms.map((v,i)=>v>0.00001?i:-1).filter(i=>i>=0);
+  const pieData=[...ai.map(i=>+cpms[i].toFixed(5))];
+  const pieColors=[...ai.map(i=>PIE_COLORS[i])];
+  const pieLabels=[...ai.map(i=>PIE_LBLS[i])];
+  if(creditCpm>0.00001){
+    pieData.push(+creditCpm.toFixed(5));
+    pieColors.push('#27AE60');
+    pieLabels.push('OCF 收益抵扣');
+  }
+
   const ctx=document.getElementById('pie-main').getContext('2d');
   charts.pie=new Chart(ctx,{type:'doughnut',
-    data:{labels:ai.map(i=>PIE_LBLS[i]),datasets:[{
-      data:ai.map(i=>+cpms[i].toFixed(5)),
-      backgroundColor:ai.map(i=>PIE_COLORS[i]),borderColor:'#fff',borderWidth:2,hoverOffset:6}]},
+    data:{labels:pieLabels,datasets:[{
+      data:pieData,
+      backgroundColor:pieColors,borderColor:'#fff',borderWidth:2,hoverOffset:6}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'56%',
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{
-        const pct=((c.parsed/totCpm)*100).toFixed(1);
-        return ` ${c.label}: $${c.parsed.toFixed(3)}/mi (${pct}%)`;
+        const isCredit=c.label==='OCF 收益抵扣';
+        const pct=((c.parsed/grossCpm)*100).toFixed(1);
+        return isCredit?` ${c.label}: -$${c.parsed.toFixed(3)}/mi (${pct}% of 毛成本)`
+                       :` ${c.label}: $${c.parsed.toFixed(3)}/mi (${pct}%)`;
       }}}}}
   });
-  document.getElementById('legend-main').innerHTML=ai.map(i=>{
-    const v=cpms[i],pct=(v/totCpm*100).toFixed(1),bw=Math.round(v/totCpm*100);
+
+  const costLegend=ai.map(i=>{
+    const v=cpms[i],pct=(v/grossCpm*100).toFixed(1),bw=Math.round(v/grossCpm*100);
     return `<div class="legend-item">
       <span class="legend-dot" style="background:${PIE_COLORS[i]}"></span>
       <span class="legend-name">${PIE_LBLS[i]}</span>
@@ -576,7 +596,20 @@ function buildPie(){
       <span class="legend-val">$${v.toFixed(3)}</span>
       <span class="legend-pct">${pct}%</span>
     </div>`;
-  }).join('');
+  });
+  const creditLegend=creditCpm>0.00001?[
+    `<div class="legend-item" style="border-top:1px dashed #d1fae5;margin-top:5px;padding-top:5px">
+      <span class="legend-dot" style="background:#27AE60"></span>
+      <span class="legend-name" style="color:#166534;font-weight:700">OCF 收益抵扣</span>
+      <div class="legend-bar-wrap"><div class="legend-bar" style="width:${Math.round(creditCpm/grossCpm*100)}%;background:#27AE60"></div></div>
+      <span class="legend-val" style="color:#166534">-$${creditCpm.toFixed(3)}</span>
+      <span class="legend-pct" style="color:#166534">${(creditCpm/grossCpm*100).toFixed(1)}%</span>
+    </div>`,
+    `<div style="margin-top:6px;padding:5px 8px;background:#f0fdf4;border-radius:6px;font-size:11px;color:#166534;font-weight:700;text-align:center">
+      净 CPM：$${netCpm.toFixed(3)}/mi
+    </div>`
+  ]:[];
+  document.getElementById('legend-main').innerHTML=[...costLegend,...creditLegend].join('');
 }
 
 function buildCPMSide(){
@@ -850,7 +883,7 @@ function renderCostTable(){
       <td>${t.loading>0?'$'+t.loading.toFixed(2):'—'}</td>
       <td>$${t.staff.toFixed(2)}</td><td>$${t.lease_ins.toFixed(2)}</td>
       <td>${t.other>0?'$'+t.other.toFixed(2)+'<br><span style="font-size:9px;color:#9a3412">'+t.other_type+'</span>':'—'}</td>
-      <td><b>${t.total!=null?'$'+t.total.toFixed(2):'<span class="na">待核算</span>'}</b>${svBadge?'<br>'+svBadge:''}</td>
+      <td><b>${t.total!=null?'$'+t.total.toFixed(2):'<span class="na">待核算</span>'}</b>${t.credit?`<br><span style="font-size:9px;color:#166534;font-weight:700">✓ OCF收益 -$${t.credit.toFixed(0)} → 净$${t.total!=null?t.total.toFixed(2):''}</span>`:''}${svBadge?'<br>'+svBadge:''}</td>
       <td>${t.cpm!=null?'$'+t.cpm.toFixed(3):'<span class="na">—</span>'}</td>
     </tr>`;
   });
@@ -867,10 +900,10 @@ function renderCostTable(){
     <td>$${known.reduce((s,t)=>s+t.staff,0).toFixed(2)}</td>
     <td>$${known.reduce((s,t)=>s+t.lease_ins,0).toFixed(2)}</td>
     <td>$${known.reduce((s,t)=>s+t.other,0).toFixed(2)}</td>
-    <td><b>$${tot.toFixed(2)}</b>${totTP?`<br><span class="chip-good">省$${(totTP-tot).toFixed(0)}</span>`:''}</td>
+    <td><b>$${tot.toFixed(2)}</b>${(()=>{const tc=known.reduce((s,t)=>s+(t.credit||0),0);return tc?`<br><span style="font-size:9px;color:#166534;font-weight:700">含OCF收益 -$${tc.toFixed(0)}</span>`:'';})()}${totTP?`<br><span class="chip-good">省$${(totTP-tot).toFixed(0)}</span>`:''}</td>
     <td>${totMi?'$'+(tot/totMi).toFixed(3):'—'}</td>
   </tr></tbody></table>
-  <p class="cost-note">* 租赁+保险按实际账单录入 · "待核算"行程里程数据尚未录入</p>`;
+  <p class="cost-note">* 租赁+保险按实际账单录入 · "待核算"行程里程数据尚未录入 · ✓ OCF收益抵扣已从净成本中扣除</p>`;
   document.getElementById('tbl-cost').innerHTML=html;
 }
 window.sortBy=function(col){
